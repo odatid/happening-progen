@@ -66,14 +66,25 @@ assert(rm.text.indexOf('リビング') >= 0, 'place not reflected');
 // 場所がないエピソードはDB既定＋フォールバック文言
 const noneSel = { title:'あるある', story:'とにかく大変だった。', author:'', pack:'HP00', genre:'match', gtheme:'pop', it:'pop' };
 const rn = gen.buildIllustPrompt(noneSel, 5);
-assert(rn.text.indexOf('フォールバック') >= 0, 'fallback note missing when no place in story');
+assert(rn.text.indexOf('エピソード本文から読み取') >= 0, 'story-first fallback missing when no place in story');
+assert(rn.text.indexOf('玩具の海') < 0, 'DB sample scene leaked into illust prompt for thin story');
+const gn = gen.buildGamePrompt(noneSel, 5);
+assert(gn.text.indexOf('玩具の海') < 0, 'DB sample scene leaked into game prompt for thin story');
 
 // 7) お迎えバス×ママチャリの例（種別判定と題材の一本化）
 const busSel = { title:'幼稚園のお迎えバス', story:'幼稚園のお迎えバスをママチャリで追いかけた。信号ごとに差が開き、曲がり角でようやく追いついた。', author:'', pack:gen.detectHappening('幼稚園のお迎えバスをママチャリで追いかける'), genre:'action', gtheme:'pop', it:'pop' };
 assert(busSel.pack === 'HP08', 'bus episode detected as ' + busSel.pack);
 const bg = gen.buildGamePrompt(busSel, 9);
+const bi = gen.buildIllustPrompt(busSel, 9);
 ['ママチャリ','お迎え','バス','幼稚園','信号','曲がり角'].forEach(k=>{ assert(bg.text.indexOf(k) >= 0, 'bus prompt missing: ' + k); });
 ['おもちゃ箱','玩具の海','玩具箱','米びつ'].forEach(k=>{ assert(bg.text.indexOf(k) < 0, 'bus prompt must not use DB example: ' + k); });
+// DBサンプルエピソード由来のシチュエーションが漏れないこと（入力に無い語）
+['テールランプ','尾灯','舞い上がる','猛烈にこぐ','バスのドア','ドアまで'].forEach(k=>{
+  assert(bg.text.indexOf(k) < 0, 'game prompt leaks DB sample situation: ' + k);
+  assert(bi.text.indexOf(k) < 0, 'illust prompt leaks DB sample situation: ' + k);
+});
+assert(bg.text.indexOf('構図ヒント') < 0, 'DB illust idea still in game prompt');
+assert(bi.text.indexOf('構図ヒント') < 0, 'DB illust idea still in illust prompt');
 assert(bg.text.indexOf('題材は上のエピソード') >= 0, 'episode-first statement missing');
 
 // 8) 新DB種別（ネット実例ベース）の判定

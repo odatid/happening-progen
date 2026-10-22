@@ -649,9 +649,9 @@ function buildSceneText(hp, a){
   if(a.places.length) L.push('主な舞台は「' + a.places.join('・') + '」');
   if(a.vehicles.length) L.push('登場する乗り物は「' + a.vehicles.join('・') + '」');
   if(a.times.length) L.push('時間帯・季節は「' + a.times.join('・') + '」');
-  if(!L.length) L.push('主な舞台は「' + (hp.scene || '家庭のリビング') + '」（DBの既定。本文に場所の記載がないためのフォールバック）');
+  if(!L.length) L.push('舞台はエピソード本文から読み取って決めること（本文に場所の明記がないため、文脈に合う日常の空間を選ぶ。DBのサンプル設定は一切使わない）');
   let s = L.join('。') + '。';
-  s += '雰囲気は「' + (a.actions.length ? a.actions.join('・') : '日常のどたばた') + '」の瞬間。';
+  s += '雰囲気は「' + (a.actions.length ? a.actions.join('・') : 'エピソードの出来事そのもの') + '」。';
   return s;
 }
 function buildCastText(hp, a){
@@ -663,28 +663,27 @@ function buildCastText(hp, a){
   return cast.join('／');
 }
 function buildPropsText(hp, a){
-  const props = [];
   const all = a.vehicles.concat(a.things);
-  if(all.length) props.push('本文に登場する乗り物・小物をそのまま出す：' + all.join('・'));
-  else props.push('本文に固有の小物の記載がないため、種別の既定を使う：' + (hp.good||[]).slice(0,4).join('・'));
-  return props.join('。');
+  if(all.length) return '本文に登場する乗り物・小物をそのまま出す：' + all.join('・');
+  return '小物はエピソードから決める。本文に固有の小物の記載がない場合に限り、種別の候補（' + (hp.good||[]).slice(0,4).join('・') + '）から選んでもよい（エピソードに合わないものは使わない）';
 }
-/* エピソード→ゲームメカニクスへの変換指示 */
-function buildMechText(hp, a){
+/* エピソード→ゲームメカニクスへの変換指示（DBサンプル由来の状況指定は使わない） */
+function buildMechText(hp, a, story){
   const who = a.people.length ? a.people.join('・') : '親（投稿者）';
-  const where = a.places.length ? a.places.join('・') : (hp.scene || '家庭');
+  const where = a.places.length ? a.places.join('・') : 'エピソード本文から決める';
   const rides = a.vehicles;
   const acts = a.actions;
   const things = a.things;
   const parts = ['主役: ' + who, '舞台: ' + where];
   if(rides.length) parts.push('乗り物: ' + rides.join('・'));
   if(things.length) parts.push('小物: ' + things.join('・'));
-  parts.push('行動: ' + (acts.length ? acts.join('・') : hp.gameHook));
+  parts.push('行動: ' + (acts.length ? acts.join('・') : 'エピソードに書かれた行動をそのまま'));
   let s = '上のエピソードの『誰が・どこで・何を使い・何をしたか』を、そのままゲームの目的・操作・得点に変換する。' + parts.join('／') + '。';
-  if(acts.some(x=>x.indexOf('追いかけ')>=0) || /追いかけ|追跡/.test(hp.gameHook)){
+  const st = String(story||'');
+  if(acts.some(x=>x.indexOf('追いかけ')>=0) || /追いかけ|追跡|間に合|遅刻/.test(st)){
     s += '推奨形：追跡アクション（主役を左右操作で動かし、よけるものと追いつく対象をエピソードの登場物にする）。';
   }
-  if(acts.some(x=>x.indexOf('こぼし')>=0)){
+  if(acts.some(x=>x.indexOf('こぼし')>=0) || /こぼ/.test(st)){
     s += '推奨形：キャッチ・回収アクション（こぼれるものを受け止める操作にする）。';
   }
   return s;
@@ -751,7 +750,7 @@ function buildGamePrompt(sel, seed){
   L.push(bl('舞台・背景', sceneText));
   L.push(bl('登場させる人物', buildCastText(r.hp, a)));
   L.push(bl('ゲーム内に出す乗り物・小物', buildPropsText(r.hp, a)));
-  L.push(bl('ゲームへの変換指示', buildMechText(r.hp, a)));
+  L.push(bl('ゲームへの変換指示', buildMechText(r.hp, a, sel.story)));
   if(a.things.length || a.vehicles.length) L.push(bl('障害物候補（悪いもの）', r.hp.bad.join(' ') + ' ＋ エピソードにちなんだ乗り物・小物（' + a.vehicles.concat(a.things).join('・') + '）から選ぶ'));
   else L.push(bl('障害物候補（悪いもの）', r.hp.bad.join(' ')));
   L.push(bl('見どころ（エピソード引用）', hl.join(' ／ ')));
@@ -808,7 +807,6 @@ function buildIllustPrompt(sel, seed){
   L.push(bl('エピソード', sel.story));
   L.push(bl('投稿者', sel.author || '区民投稿'));
   L.push(bl('ハプニング種別', r.hp.label + '（' + r.hp.id + '）'));
-  L.push(bl('1コマの構図ヒント', r.hp.illustIdea));
   L.push(bl('フキダシ用オノマトペ候補', r.onoIllust));
   L.push('');
   L.push('# 物語の反映（最重要・必ず守ること）');
@@ -818,7 +816,7 @@ function buildIllustPrompt(sel, seed){
   L.push(bl('描き込む小物', buildPropsText(r.hp, a)));
   L.push(bl('見どころ（エピソード引用）', hl.join(' ／ ')));
   L.push('- 1コマで描く瞬間は、上のエピソードの中で一番笑える場面（見どころ）にすること。エピソードと無関係な汎用構図にしないこと。');
-  L.push('- 背景はこのエピソードの舞台（' + (a.places.length ? a.places.join('・') : (r.hp.scene || '家庭のリビング')) + '）を読み取れるように描き込むこと。');
+  L.push('- 背景はこのエピソードの舞台（' + (a.places.length ? a.places.join('・') : 'エピソード本文から読み取る') + '）を読み取れるように描き込むこと。');
   L.push('');
   L.push('# イラストテイスト（' + t.name + '）');
   L.push('1. スタイル：' + t.style);
