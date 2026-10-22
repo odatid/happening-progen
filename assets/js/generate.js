@@ -242,8 +242,9 @@ function roll(sel, seed){
   const vs = variantsOf(genre.id);
   const variant = vs.length ? vs[Math.floor(rng()*vs.length)] : null;
   const twists = pickN(rng, window.HP.TWISTS, 1 + (rng()<0.4 ? 1 : 0));
+  const comedy = pickN(rng, window.HP.COMEDY, 2);
   const onoGame = pickN(rng, hp.ono, Math.min(3, (hp.ono||[]).length));
-  return { hp, genre, variant, twists, onoGame, onoIllust: onoGame[0]||'', cfg };
+  return { hp, genre, variant, twists, comedy, onoGame, onoIllust: onoGame[0]||'', cfg };
 }
 
 function bl(label, text){ return '- ' + label + '：' + text; }
@@ -291,6 +292,13 @@ function buildGamePrompt(sel, seed){
   L.push(bl('ジャンル', r.genre.name + ' — ' + r.genre.goal));
   if(r.variant) L.push(bl('実装パターン（操作の型の参考・1つ）', r.variant.name + ' — ' + r.variant.desc));
   if(r.twists.length) L.push(bl('ツイスト（ひとひねり）', r.twists.map(t=>t.text).join(' ／ ')));
+  L.push('');
+  L.push('# 笑い設計（最重要・コミカル表現の要件）');
+  L.push('- 子どもの起こすハプニングは「悪意のない無邪気な事象」。ゲーム内で子どもを悪者・犯人扱いせず、罰する演出もしない。失敗は「大変なことになった!」というコミカルな事態として表現する。');
+  L.push('- 親子で笑える「あるある」の共感が笑いの軸。恐怖・お仕置き・怒号で締めず、最後は親子で笑い合う余韻で終わること。');
+  L.push('- 笑いの演出パターン（下記を採用し、エピソードに合わせて調整）：');
+  r.comedy.forEach(c=>L.push('  - ' + c.name + '：' + c.game));
+  L.push('- ハプニングの「無茶さ」は誇張したコミカル演出（画面シェイク・スローモーション・顔芸・コミカル物理）で表現し、現実の危険さや苦痛は描かないこと。');
   L.push(bl('操作体系（PC）', r.genre.controlsPC));
   L.push(bl('操作体系（スマホ）', r.genre.controlsSP));
   L.push(bl('ゲームサイクル', 'タイトル画面（操作説明含む）→ メインゲーム → リザルト画面（スコア・ランク判定・再挑戦ボタン）。'));
@@ -370,6 +378,8 @@ function buildIllustPrompt(sel, seed){
   L.push('');
   L.push('# 注意事項');
   L.push('- ' + t.ng);
+  L.push('- 子どもの起こすハプニングは悪意のない無邪気な事象。子どもを悪者にせず、笑いの演出は下記を採用：');
+  r.comedy.forEach(c=>L.push('  - ' + c.name + '：' + c.illust));
   L.push('- 子育てを否定する表現ではなく、当事者も笑える共感のある描写にする。');
   L.push('');
   L.push('# 出力形式');
@@ -393,6 +403,7 @@ function summary(sel, r){
     genre: r.genre.name,
     variant: r.variant ? (r.variant.name + ' — ' + r.variant.desc) : '—',
     twists: r.twists.map(x=>x.text),
+    comedy: r.comedy.map(x=>x.name),
     gtheme: t ? t.name : '',
     itaste: it ? it.name : '',
     scene: buildSceneText(r.hp, a),

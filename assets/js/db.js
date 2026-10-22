@@ -8,7 +8,7 @@ window.HP = window.HP || {};
 'use strict';
 
 const SHEETS = [
-  '設定','マスタ_ハプニング','パターン_ジャンル','バリエーション','ツイスト','パターン_テイスト','パターン_イラスト'
+  '設定','マスタ_ハプニング','パターン_ジャンル','バリエーション','ツイスト','コメディ','パターン_テイスト','パターン_イラスト'
 ];
 
 /* ---------------- CSV ---------------- */
@@ -69,6 +69,10 @@ function build(S){
   out.VARIANTS = g('バリエーション').filter(r=>r.id);
 
   out.TWISTS = g('ツイスト').filter(r=>r.id);
+
+  out.COMEDY = g('コメディ').filter(r=>r.id).map(r=>({
+    id:r.id, name:r.name, game:r.game_text, illust:r.illust_text
+  }));
 
   out.TASTES = g('パターン_テイスト').filter(r=>r.id).map(r=>({
     id:r.id, name:r.name, style:r.style_text, palette:r.palette_text,

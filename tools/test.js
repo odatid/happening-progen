@@ -98,6 +98,16 @@ assert(bg.text.indexOf('題材は上のエピソード') >= 0, 'episode-first st
   assert(gen.detectHappening(pair[0]) === pair[1], 'detect "' + pair[0] + '" → ' + gen.detectHappening(pair[0]) + ' (want ' + pair[1] + ')');
 });
 
+// 9) 笑い設計（無邪気ハプニングのコミカル表現）
+assert(gp.text.indexOf('# 笑い設計') >= 0, 'comedy design section missing (game)');
+assert(gp.text.indexOf('悪意のない無邪気な事象') >= 0, 'innocence rule missing (game)');
+assert(gp.text.indexOf('罰する演出もしない') >= 0, 'no-punishment rule missing (game)');
+assert(ip.text.indexOf('悪意のない無邪気な事象') >= 0, 'innocence rule missing (illust)');
+assert(gp.text.indexOf('笑いの演出パターン') >= 0, 'comedy pattern list missing (game)');
+const rg2 = gen.buildGamePrompt(reflectSel, 3);
+const cg = gen.buildIllustPrompt(reflectSel, 3);
+assert(rg2.text.indexOf('笑い設計') >= 0 && cg.text.indexOf('無邪気') >= 0, 'comedy sections missing for other input');
+
 // 6) サンプル列の確認
 window.HP.HAPPI.forEach(h=>{ assert(!!h.sample && !!h.sampleTitle, 'sample missing: ' + h.id); });
 

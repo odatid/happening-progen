@@ -102,6 +102,7 @@ textarea{min-height:110px;resize:vertical;}
 .sum .chip.k-genre{background:var(--yellow);}
 .sum .chip.k-variant{background:#ffd9e2;}
 .sum .chip.k-twist{background:#d9f2ff;}
+.sum .chip.k-comedy{background:#fff0b3;}
 .sum .chip.k-taste{background:#e5dcff;}
 .sum .chip.k-extract{background:#ffe9d6;}
 .sum .chip.k-scene{background:#e2ffd9;text-align:left;max-width:100%;white-space:normal;}

@@ -47,6 +47,7 @@ function chipsHTML(sum){
   c.push('<span class="chip k-genre"><b>ジャンル:</b> ' + esc(sum.genre) + '</span>');
   c.push('<span class="chip k-variant"><b>実装パターン:</b> ' + esc(sum.variant) + '</span>');
   sum.twists.forEach(t=>c.push('<span class="chip k-twist"><b>ツイスト:</b> ' + esc(t) + '</span>'));
+  sum.comedy.forEach(t=>c.push('<span class="chip k-comedy"><b>笑い:</b> ' + esc(t) + '</span>'));
   c.push('<span class="chip k-taste"><b>ゲーム:</b> ' + esc(sum.gtheme) + ' ／ <b>イラスト:</b> ' + esc(sum.itaste) + '</span>');
   sum.extracted.forEach(t=>c.push('<span class="chip k-extract"><b>本文から抽出:</b> ' + esc(t) + '</span>'));
   c.push('<span class="chip k-scene"><b>舞台:</b> ' + esc(sum.scene) + '</span>');

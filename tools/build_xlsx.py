@@ -1,6 +1,6 @@
 # =========================================================
 # HAP//GEN — tools/build_xlsx.py
-# csv/*.csv（正） から happening_db.xlsx（スプレッドシート編集用）を生成する。
+# （コメディ.csvを含む csv/ の全シートを xlsx 化する — 追記不要・globで自動反映）
 # 使い方: python3 tools/build_xlsx.py
 # =========================================================
 import csv, glob, os
