@@ -142,6 +142,18 @@ const bikeSel = { title:'幼稚園のお迎えバス', story:'ママチャリで
 const bp2 = gen.buildGamePrompt(bikeSel, 33);
 assert(['CC01','CC06'].indexOf(bp2.roll.ch.id) >= 0, 'bike story should prefer mama or mamachari, got ' + bp2.roll.ch.id);
 assert(bp2.text.indexOf('ママチャリ') >= 0, 'mamachari keyword missing from bike prompt');
+// 追加キャラ（じいじばあば/三輪車/ハムスター）の本文連動
+const giiSel = { title:'じいじの大活躍', story:'じいじとばあばがお迎えに来てくれた。', author:'', pack:'HP00', genre:'omakase', gtheme:'pop', it:'pop' };
+const gp4 = gen.buildGamePrompt(giiSel, 33);
+assert(gp4.roll.ch.id === 'CC09', 'grandparents story should prefer CC09, got ' + gp4.roll.ch.id);
+assert(gp4.text.indexOf('じいじ') >= 0 && gp4.text.indexOf('ばあば') >= 0, 'grandparent keywords missing');
+const triSel = { title:'三輪車の初出走', story:'三輪車で初めての公園デビュー。', author:'', pack:'HP00', genre:'omakase', gtheme:'pop', it:'pop' };
+const tp2 = gen.buildGamePrompt(triSel, 33);
+assert(tp2.roll.ch.id === 'CC10', 'tricycle story should prefer CC10, got ' + tp2.roll.ch.id);
+const hamSel = { title:'ハムスター脱走事件', story:'ハムスターがケージから脱走して、部屋のすきまに入ってしまった。', author:'', pack:'HP00', genre:'omakase', gtheme:'pop', it:'pop' };
+const hp2b = gen.buildGamePrompt(hamSel, 33);
+assert(hp2b.roll.ch.id === 'CC11', 'hamster story should prefer CC11, got ' + hp2b.roll.ch.id);
+assert(window.HP.CHARS.length === 11, 'char DB should have 11 entries, got ' + window.HP.CHARS.length);
 
 // 10) 種別専用テンプレート（落書き→おもちゃの仕分け 問題の修正）
 const allTpl = window.HP.TPL || [];
