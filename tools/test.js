@@ -47,7 +47,28 @@ assert(texts.size > 1, 'omakase variants do not change with seed');
 // 同一シードなら同一（決定的）
 assert(gen.buildGamePrompt(sel, 7).text === gen.buildGamePrompt(sel, 7).text, 'same seed must produce same prompt');
 
-// 5) サンプル列の確認
+// 5) 本文がプロンプトに反映されるか（最重要）
+const reflectSel = { title:'えんぴつ風船', story:'スーパーのレジで待っている間に、妹がカーテンをぶち破って全裸で脱走を始めた。パパが撮影に夢中になり、家の犬が追いかけた。', author:'', pack:'HP00', genre:'puzzle', gtheme:'pixel', it:'gekiga' };
+const rg = gen.buildGamePrompt(reflectSel, 3);
+const ri = gen.buildIllustPrompt(reflectSel, 3);
+['スーパー','妹','カーテン','全裸','パパ','犬','撮影','脱走'].forEach(k=>{
+  assert(rg.text.indexOf(k) >= 0, 'game prompt does not reflect story keyword: ' + k);
+  assert(ri.text.indexOf(k) >= 0, 'illust prompt does not reflect story keyword: ' + k);
+});
+assert(rg.text.indexOf('物語の反映') >= 0, 'story reflection section missing (game)');
+assert(ri.text.indexOf('物語の反映') >= 0, 'story reflection section missing (illust)');
+assert(rg.text.indexOf('見どころ（エピソード引用）') >= 0, 'highlight quote missing (game)');
+// 時間帯の反映
+const morningSel = { title:'朝の大惨事', story:'朝の出勤前に、リビングで牛乳を全部こぼされた。', author:'', pack:'HP01', genre:'action', gtheme:'pop', it:'pop' };
+const rm = gen.buildGamePrompt(morningSel, 5);
+assert(rm.text.indexOf('朝') >= 0, 'time-of-day not reflected');
+assert(rm.text.indexOf('リビング') >= 0, 'place not reflected');
+// 場所がないエピソードはDB既定＋フォールバック文言
+const noneSel = { title:'あるある', story:'とにかく大変だった。', author:'', pack:'HP00', genre:'match', gtheme:'pop', it:'pop' };
+const rn = gen.buildIllustPrompt(noneSel, 5);
+assert(rn.text.indexOf('フォールバック') >= 0, 'fallback note missing when no place in story');
+
+// 6) サンプル列の確認
 window.HP.HAPPI.forEach(h=>{ assert(!!h.sample && !!h.sampleTitle, 'sample missing: ' + h.id); });
 
 if(fails){ console.error(fails + ' failures'); process.exit(1); }

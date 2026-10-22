@@ -29,6 +29,152 @@ function tasteById(id){ return (window.HP.TASTES||[]).find(x=>x.id===id); }
 function illustById(id){ return (window.HP.ILLUST||[]).find(x=>x.id===id); }
 function variantsOf(gid){ return (window.HP.VARIANTS||[]).filter(v=>v.genre_id===gid); }
 
+/* ---------- 本文解析：エピソードから舞台・人物・小物・出来事を抽出 ---------- */
+const DIC_PLACES = [
+  ['リビング,居間', 'リビング'],
+  ['キッチン,台所', 'キッチン（台所）'],
+  ['食卓,ダイニング', '食卓まわり'],
+  ['玄関,下駄箱', '玄関'],
+  ['トイレ,便所,おまる', 'トイレ前の通路'],
+  ['風呂,バスルーム,シャワー,湯船', 'バスルーム'],
+  ['洗面所,洗濯,ベランダ,物干し', '洗濯まわり・ベランダ'],
+  ['寝室,ふとん,布団,ベッド', '寝室'],
+  ['子ども部屋,子供部屋,キッズルーム', '子ども部屋'],
+  ['廊下,階段', '廊下・階段'],
+  ['商店街,スーパー,コンビニ,レジ,ドラッグストア,モール,店', '商店街・お店の中'],
+  ['公園,砂場,ブランコ,すべり台,児童館', '公園'],
+  ['電車,駅,ホーム,バス,バス停,車内', '電車・バスの中'],
+  ['車,チャイルドシート,ドライブ,助手席', '車の中'],
+  ['病院,待合室,注射,クリニック', '病院・待合室'],
+  ['保育園,幼稚園,送迎,園バス', '保育園・幼稚園'],
+  ['和室,畳,縁側', '和室（畳）'],
+  ['エレベーター', 'エレベーター'],
+  ['プール,海,川,水遊び', '水辺'],
+  ['庭,ガレージ,自転車置き場', '家のまわり'],
+  ['テレワーク,在宅ワーク,書斎', 'リビングの作業スペース'],
+  ['会社,オフィス', '会社・オフィス']
+];
+const DIC_TIMES = [
+  ['朝,モーニング,起床,出勤', '朝'],
+  ['昼,お昼,日中', '昼'],
+  ['夕方,夕飯,夕食', '夕方'],
+  ['夜,夜中,深夜,真夜中,夜泣き,寝る前', '夜'],
+  ['早朝,未明', '早朝'],
+  ['冬,雪,寒い', '冬'],
+  ['夏,猛暑,暑い,梅雨', '夏'],
+  ['雨,台風,豪雨', '雨の日']
+];
+const DIC_PEOPLE = [
+  ['パパ,父,親父,だんな,旦那,夫', 'パパ'],
+  ['ママ,母,母親,かあさん,妻,嫁', 'ママ'],
+  ['じいじ,祖父,おじいちゃん,爺', 'じいじ'],
+  ['ばあば,祖母,おばあちゃん,婆', 'ばあば'],
+  ['兄,お兄ちゃん,あにき', 'お兄ちゃん'],
+  ['姉,お姉ちゃん', 'お姉ちゃん'],
+  ['妹', '妹'],
+  ['弟', '弟'],
+  ['双子', '双子'],
+  ['赤ちゃん,あかちゃん,乳児,新生児', '赤ちゃん'],
+  ['犬,ワンコ,ポチ,柴,ゴールデン', '家の犬'],
+  ['猫,ネコ,にゃんこ', '家の猫'],
+  ['先生,保育士', '先生'],
+  ['店員,レジ,スタッフ', '店員'],
+  ['上の子,下の子', '兄弟姉妹']
+];
+const DIC_THINGS = [
+  ['牛乳,ミルクパック', '牛乳パック'],
+  ['スマホ,アイフォン,携帯', 'スマホ'],
+  ['クレヨン,クレパス,絵の具,ペン,マジック', 'クレヨン・えのぐ'],
+  ['絵本', '絵本'],
+  ['オムツ,おむつ,紙オムツ', 'おむつ'],
+  ['おもちゃ,玩具,ブロック,プラレール', 'おもちゃ'],
+  ['靴下,くつした,靴,サンダル', '靴・靴下'],
+  ['カーテン,のれん', 'カーテン'],
+  ['リモコン,エアコン', 'エアコンのリモコン'],
+  ['コップ,グラス,タンブラー', 'コップ'],
+  ['スプーン,フォーク,はし,箸', 'スプーン・フォーク'],
+  ['ごはん,ご飯,カレー,パスタ,ラーメン,パン,おかず,離乳食', 'ごはん'],
+  ['ジュース,麦茶,お茶,水筒', '飲み物'],
+  ['トイレットペーパー,トイレットロール,ティッシュ', 'トイレットペーパー'],
+  ['哺乳瓶,ほにゅうびん,粉ミルク,ストローマグ', '哺乳瓶・マグ'],
+  ['眼鏡,めがね,メガネ', '眼鏡'],
+  ['化粧,口紅,ファンデ,スキンケア,美容液', '化粧品'],
+  ['洗剤,柔軟剤,掃除機,ワックス', '洗剤・掃除道具'],
+  ['パスモ,スイカ,財布,カード,鍵', '財布・カード類'],
+  ['おやつ,菓子,チョコ,スナック,ポテチ', 'おやつ']
+];
+const DIC_ACTIONS = [
+  ['全裸,裸,はだか,服を脱,パンツ一丁', '裸とっかえひっかえ'],
+  ['こぼし,こぼれ,ぶちまけ,ダバダバ,床に広が', 'こぼし・ぶちまけ'],
+  ['散らか,ひっくり返し,ひっくり返り,反乱,破壊', '大散乱'],
+  ['抱っこ,おんぶ,担ぐ,背負', '抱っこ・おんぶ'],
+  ['追いかけ,追跡,逃走,脱走,ダッシュ,走り', '追いかけっこ'],
+  ['隠れ,かくれんぼ,見つから,行方不明,痕跡,跡', 'かくれんぼ・痕跡捜索'],
+  ['飛び出し,飛び出し,かけ出し', '飛び出し'],
+  ['泣き,大泣き,だだこね,号泣,ぐず', '大泣き・だだこね'],
+  ['撮影,写真,動画,カメラ', '記録に残そうとする大人'],
+  ['正座,にらめっこ,にらむ,凝視', '正座・にらめっこ'],
+  ['寝た,寝落ち,寝かしつけ,添い寝,眠り', '寝かしつけ攻防'],
+  ['とられ,盗られ,取り返し,けんと,かっと', 'とりあい'],
+  ['描い,かいた,らくがき,落書き,仕上げ,作品', '大作完成'],
+  ['食べ,たべ,あーん,もぐもぐ,吐き出し,べー', '口まわり攻防'],
+  ['鳴き,うるさい,騒音,音', '音の犯人探し']
+];
+
+function scanDic(text, dic){
+  const t = String(text||'');
+  const out = [];
+  dic.forEach(pair=>{
+    const kws = pair[0].split(',');
+    if(kws.some(k=>t.indexOf(k)>=0) && out.indexOf(pair[1])<0) out.push(pair[1]);
+  });
+  return out;
+}
+function analyzeStory(text){
+  const a = {
+    places:  scanDic(text, DIC_PLACES),
+    times:   scanDic(text, DIC_TIMES),
+    people:  scanDic(text, DIC_PEOPLE),
+    things:  scanDic(text, DIC_THINGS),
+    actions: scanDic(text, DIC_ACTIONS)
+  };
+  a.none = !a.places.length && !a.times.length && !a.people.length && !a.things.length && !a.actions.length;
+  return a;
+}
+/* 本文から「事件の瞬間」になりそうな文を拾う */
+function storyHighlights(text, maxN){
+  const t = String(text||'');
+  const sentences = t.split(/(?<=[。！？!?.\n])/).map(s=>s.trim()).filter(Boolean);
+  const keys = ['こぼ','散らか','脱走','逃げ','追い','泣き','だだこね','裸','描い','食べ','寝','全裸','笑い','撮影','うんち','トイレ','風呂','握りつぶ','返し','とられ','投げ','置いて','戻ったら','気づ','隠れ','まみれ'];
+  const hits = sentences.filter(s=>keys.some(k=>s.indexOf(k)>=0));
+  const rest = sentences.filter(s=>hits.indexOf(s)<0);
+  return hits.concat(rest).slice(0, maxN||3);
+}
+/* 舞台・背景テキストを組む（DBの既定＋本文解析を融合） */
+function buildSceneText(hp, a){
+  const L = [];
+  if(a.places.length) L.push('主な舞台は「' + a.places.join('・') + '」');
+  if(a.times.length) L.push('時間帯・季節は「' + a.times.join('・') + '」');
+  if(!L.length) L.push('主な舞台は「' + (hp.scene || '家庭のリビング') + '」（DBの既定。本文に場所の記載がないためのフォールバック）');
+  let s = L.join('。') + '。';
+  s += '雰囲気は「' + (a.actions.length ? a.actions.join('・') : '日常のどたばた') + '」の瞬間。';
+  return s;
+}
+function buildCastText(hp, a){
+  const cast = [];
+  if(a.people.length) cast.push('登場人物：' + a.people.join('・'));
+  const sub = ['親（投稿者本人）', '子ども（ハプニングの主役）'];
+  if(a.people.length) cast.push('必須：' + sub.join('、'));
+  else cast.push('登場人物：' + sub.join('、') + '（本文に特定の人物の記載がないための既定）');
+  return cast.join('／');
+}
+function buildPropsText(hp, a){
+  const props = [];
+  if(a.things.length) props.push('本文に登場する小物をそのまま出す：' + a.things.join('・'));
+  else props.push('本文に固有の小物の記載がないため、種別の既定を使う：' + (hp.good||[]).slice(0,4).join('・'));
+  return props.join('。');
+}
+
 /* 本文キーワード → ハプニング種別の自動判定 */
 function detectHappening(text){
   const t = String(text||'');
@@ -65,6 +211,9 @@ function bl(label, text){ return '- ' + label + '：' + text; }
 function buildGamePrompt(sel, seed){
   const r = roll(sel, seed);
   const cfg = r.cfg;
+  const a = analyzeStory(sel.story);
+  const hl = storyHighlights(sel.story, 3);
+  const sceneText = buildSceneText(r.hp, a);
   const min = cfg.game_min_sec || '30', max = cfg.game_max_sec || '90';
   const L = [];
   L.push('# 目的');
@@ -77,10 +226,17 @@ function buildGamePrompt(sel, seed){
   L.push(bl('投稿者', sel.author || '区民投稿'));
   L.push(bl('ハプニング種別', r.hp.label + '（' + r.hp.id + '）'));
   L.push(bl('ゲーム化のヒント', r.hp.gameHook));
-  L.push(bl('舞台の描写', r.hp.scene));
   L.push(bl('フキダシ用オノマトペ候補', r.onoGame.join(' / ')));
-  L.push(bl('ゲーム内アイテム候補（よいもの）', r.hp.good.join(' ')));
-  L.push(bl('障害物候補（悪いもの）', r.hp.bad.join(' ')));
+  L.push('');
+  L.push('# 物語の反映（最重要・必ず守ること）');
+  L.push(bl('舞台・背景', sceneText));
+  L.push(bl('登場させる人物', buildCastText(r.hp, a)));
+  L.push(bl('ゲーム内に出す小物', buildPropsText(r.hp, a)));
+  if(a.things.length) L.push(bl('障害物候補（悪いもの）', r.hp.bad.join(' ') + ' ＋ エピソードにちなんだ小物（' + a.things.join('・') + '）から選ぶ'));
+  else L.push(bl('障害物候補（悪いもの）', r.hp.bad.join(' ')));
+  L.push(bl('見どころ（エピソード引用）', hl.join(' ／ ')));
+  L.push('- 背景の描き込み・ステージの小物・演出は、上のエピソードの状況をそのまま反映すること。「あるある汎用」の無難な背景にしないこと。');
+  L.push('- ゲームの締め（リザルト画面）に、エピソードのオチや一番笑える瞬間を1行で表示すること。');
   L.push('');
   L.push('# ゲームジャンルとゲームデザイン');
   L.push(bl('ジャンル', r.genre.name + ' — ' + r.genre.goal));
@@ -119,6 +275,9 @@ function buildGamePrompt(sel, seed){
 function buildIllustPrompt(sel, seed){
   const r = roll(sel, seed);
   const cfg = r.cfg;
+  const a = analyzeStory(sel.story);
+  const hl = storyHighlights(sel.story, 2);
+  const sceneText = buildSceneText(r.hp, a);
   const t = illustById(sel.it) || (window.HP.ILLUST||[])[0];
   const L = [];
   L.push('# 目的');
@@ -130,8 +289,15 @@ function buildIllustPrompt(sel, seed){
   L.push(bl('投稿者', sel.author || '区民投稿'));
   L.push(bl('ハプニング種別', r.hp.label + '（' + r.hp.id + '）'));
   L.push(bl('1コマの構図ヒント', r.hp.illustIdea));
-  L.push(bl('舞台の描写', r.hp.scene));
   L.push(bl('フキダシ用オノマトペ候補', r.onoIllust));
+  L.push('');
+  L.push('# 物語の反映（最重要・必ず守ること）');
+  L.push(bl('舞台・背景', sceneText));
+  L.push(bl('登場させる人物', buildCastText(r.hp, a)));
+  L.push(bl('描き込む小物', buildPropsText(r.hp, a)));
+  L.push(bl('見どころ（エピソード引用）', hl.join(' ／ ')));
+  L.push('- 1コマで描く瞬間は、上のエピソードの中で一番笑える場面（見どころ）にすること。エピソードと無関係な汎用構図にしないこと。');
+  L.push('- 背景はこのエピソードの舞台（' + (a.places.length ? a.places.join('・') : (r.hp.scene || '家庭のリビング')) + '）を読み取れるように描き込むこと。');
   L.push('');
   L.push('# イラストテイスト（' + t.name + '）');
   L.push('1. スタイル：' + t.style);
@@ -158,13 +324,24 @@ function buildIllustPrompt(sel, seed){
 /* ---------- UI用サマリー ---------- */
 function summary(sel, r){
   const t = tasteById(sel.gt); const it = illustById(sel.it);
+  const a = analyzeStory(sel.story);
+  const parts = [];
+  if(a.places.length) parts.push(a.places.join('・'));
+  if(a.times.length) parts.push(a.times.join('・'));
+  if(a.people.length) parts.push('人物: ' + a.people.join('・'));
+  if(a.things.length) parts.push('小物: ' + a.things.join('・'));
+  if(a.actions.length) parts.push('状況: ' + a.actions.join('・'));
   return {
     hp: r.hp.label + '（' + r.hp.id + '）',
     genre: r.genre.name,
     variant: r.variant ? (r.variant.name + ' — ' + r.variant.desc) : '—',
     twists: r.twists.map(x=>x.text),
     gtheme: t ? t.name : '',
-    itaste: it ? it.name : ''
+    itaste: it ? it.name : '',
+    scene: buildSceneText(r.hp, a),
+    extracted: parts,
+    cast: buildCastText(r.hp, a),
+    props: buildPropsText(r.hp, a)
   };
 }
 
