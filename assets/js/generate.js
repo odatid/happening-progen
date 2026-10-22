@@ -26,11 +26,11 @@ function pickN(rng, arr, n){
 function nCk(n,k){ if(k<0||k>n) return 0; let r=1; for(let i=1;i<=k;i++){ r=r*(n-k+i)/i; } return Math.round(r); }
 function comboCount(){
   const tw = (window.HP.TWISTS||[]).length, co = (window.HP.COMEDY||[]).length, gm = (window.HP.GIMMICKS||[]).length;
-  const tplTotal = (window.HP.TPL||[]).length;
+  const tplTotal = (window.HP.TPL||[]).length, arc = (window.HP.ARCADE||[]).length;
   const twistCombos = nCk(tw,2)+nCk(tw,3);
   const comedyCombos = nCk(co,2)+nCk(co,3);
   const gimmickCombos = nCk(gm,1)+nCk(gm,2);
-  return tplTotal * twistCombos * comedyCombos * gimmickCombos;
+  return arc * tplTotal * twistCombos * comedyCombos * gimmickCombos;
 }
 /* ハプニング種別に対応するゲームテンプレート（種別専用 → 汎用HP00 の順） */
 function templatesFor(hpId){
@@ -262,9 +262,10 @@ function roll(sel, seed){
   const gimmicks = pickN(rng, window.HP.GIMMICKS, 1 + (rng()<0.5 ? 1 : 0));
   const tplPool = templatesFor(hp.id);
   const tpl = tplPool.length ? tplPool[Math.floor(rng()*tplPool.length)] : null;
-  const variant = tpl ? null : (vs.length ? vs[Math.floor(rng()*vs.length)] : null);
+  const arcade = (window.HP.ARCADE||[]).length ? (window.HP.ARCADE||[])[Math.floor(rng()*(window.HP.ARCADE||[]).length)] : null;
+  const variant = null; /* アーケード型基盤が常に主軸なので汎用バリアントは使わない */
   const onoGame = pickN(rng, hp.ono, Math.min(3, (hp.ono||[]).length));
-  return { hp, genre, variant, tpl, twists, comedy, gimmicks, onoGame, onoIllust: onoGame[0]||'', cfg };
+  return { hp, genre, variant, tpl, arcade, twists, comedy, gimmicks, onoGame, onoIllust: onoGame[0]||'', cfg };
 }
 
 function bl(label, text){ return '- ' + label + '：' + text; }
@@ -310,12 +311,15 @@ function buildGamePrompt(sel, seed){
   L.push('');
   L.push('# ゲームジャンルとゲームデザイン');
   L.push(bl('ジャンル', r.genre.name + ' — ' + r.genre.goal));
+  L.push('# ゲーム基盤（アーケード型・必須）');
+  L.push('ゲームの土台は、下記の懐かしのアーケード型にすること（子どもから大人まで直感的に遊べる形式）。');
+  L.push(bl('基盤型「' + r.arcade.name + '」', r.arcade.desc));
+  L.push('- 基盤型の操作・進行・得点ルールを必ず使うこと。そのうえで、舞台・登場物・ゴール・障害物はすべてエピソードの内容に置き換えること（基盤は「型」であって、内容はエピソード100%）。');
   if(r.tpl){
     L.push('');
-    L.push('# ゲームコア設計（このハプニング専用テンプレート・主軸）');
+    L.push('# ゲームコア設計（このハプニング専用テンプレート・題材の適用）');
     L.push(bl('テンプレート「' + r.tpl.name + '」', r.tpl.core));
-    L.push('- このコアの遊びをエピソードの舞台・人物・小物・展開で実装すること。テンプレートの型とエピソードの内容が両方伝わることが必須。テンプレートの例文・小物をそのまま使わず、エピソードに合わせて置き換えること。');
-    L.push('- コアの目的・操作・得点が「タイトルとエピソードの内容」と直接つながるように、用語をエピソードの言葉に寄せること（例：エピソードの物・場所・人の名前を画面表示・演出名に使う）。');
+    L.push('- このテンプレートの場面・目的を、上のアーケード基盤型の上に乗せること（例：基盤＝横スクロール、テンプレ＝壁がきミュージアムなら「右へ進みながら壁の落書きをなぞって消す」）。基盤型とテンプレートの融合がこのゲームの独自性になる。');
   }
   if(r.variant) L.push(bl('実装パターン（操作の型の参考・1つ）', r.variant.name + ' — ' + r.variant.desc));
   if(r.twists.length) L.push(bl('ツイスト（ひとひねり・複数可）', r.twists.map(t=>t.text).join(' ／ ')));
@@ -441,6 +445,7 @@ function summary(sel, r){
     comedy: r.comedy.map(x=>x.name),
     gimmicks: r.gimmicks.map(x=>x.name),
     tpl: r.tpl ? (r.tpl.name + ' — ' + r.tpl.core) : '',
+    arcade: r.arcade.name,
     combos: comboCount(),
     gtheme: t ? t.name : '',
     itaste: it ? it.name : '',

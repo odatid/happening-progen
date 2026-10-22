@@ -121,6 +121,15 @@ const combos = gen.comboCount ? gen.comboCount() : 0;
 assert(combos > 1000000, 'combo count too small: ' + combos);
 assert(gp.text.indexOf('undefined') < 0, 'undefined in bus prompt');
 
+// 11) アーケード基盤必須
+assert(gp.text.indexOf('# ゲーム基盤（アーケード型・必須）') >= 0, 'arcade base section missing');
+assert(gp.roll.arcade && gp.roll.arcade.name, 'no arcade base picked');
+assert(gp.text.indexOf('基盤型「') >= 0, 'arcade base line missing');
+const arcSel = { title:'テスト', story:'テスト。', author:'', pack:'HP05', genre:'omakase', gtheme:'pop', it:'pop' };
+const cg3 = gen.buildGamePrompt(arcSel, 21);
+assert(cg3.text.indexOf('# ゲーム基盤（アーケード型・必須）') >= 0, 'arcade base missing for crayon');
+assert(cg3.roll.arcade, 'no arcade for crayon');
+
 // 10) 種別専用テンプレート（落書き→おもちゃの仕分け 問題の修正）
 const allTpl = window.HP.TPL || [];
 window.HP.HAPPI.forEach(h=>{
