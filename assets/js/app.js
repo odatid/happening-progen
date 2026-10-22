@@ -57,12 +57,14 @@ function generate(rollNew){
   if(!window.HP || !window.HP.HAPPI){ toast('DBを読み込み中です。もう一度おしてください'); return; }
   const i = inputs();
   if(!i.t.trim() || !i.s.trim()){ toast('タイトルとエピソードは必須です'); return; }
+  /* UIフォーム(t/s/a/p/g) → 生成関数(title/story/author/pack/genre) のキーを正しく対応させる */
+  const sel = { title: i.t, story: i.s, author: i.a, pack: i.p, genre: i.g, gtheme: i.gt, it: i.it };
   if(rollNew) seed = Math.floor(Math.random()*2147483647);
-  const gp = window.HP_GEN.buildGamePrompt(i, seed);
-  const ip = window.HP_GEN.buildIllustPrompt(i, seed);
+  const gp = window.HP_GEN.buildGamePrompt(sel, seed);
+  const ip = window.HP_GEN.buildIllustPrompt(sel, seed);
   $('outGame').value = gp.text;
   $('outIllust').value = ip.text;
-  $('sumChips').innerHTML = chipsHTML(window.HP_GEN.summary(i, gp.roll));
+  $('sumChips').innerHTML = chipsHTML(window.HP_GEN.summary(sel, gp.roll));
   $('formCard').hidden = true;
   $('outCard').hidden = false;
   const payload = b64u(JSON.stringify(Object.assign({}, i, { seed: seed })));

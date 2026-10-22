@@ -259,7 +259,7 @@ function buildGamePrompt(sel, seed){
   const L = [];
   L.push('今回の種になるハプニングエピソードはこちら。');
   L.push('【エピソード】' + (sel.title || '（無題）'));
-  L.push('【本文】' + sel.story);
+  L.push('【本文】' + (sel.story || '（本文なし）'));
   L.push('【投稿者】' + (sel.author || '区民投稿'));
   L.push('');
   L.push('こちらを表現するユニークなゲームを生成する。エピソードの舞台・登場人物・小物・展開をそのままゲームに落とし込み、このエピソードでしか作れない1本にすること。');
@@ -331,7 +331,7 @@ function buildIllustPrompt(sel, seed){
   const L = [];
   L.push('今回の種になるハプニングエピソードはこちら。');
   L.push('【エピソード】' + (sel.title || '（無題）'));
-  L.push('【本文】' + sel.story);
+  L.push('【本文】' + (sel.story || '（本文なし）'));
   L.push('【投稿者】' + (sel.author || '区民投稿'));
   L.push('');
   L.push('こちらを表現する1コマイラストを生成する。エピソードの舞台・登場人物・小物・一番笑える瞬間をそのまま1コマに落とし込み、このエピソードでしか描けない1枚にすること。');
