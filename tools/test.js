@@ -112,6 +112,14 @@ assert(gp.text.indexOf('親だけが必死') >= 0, 'contrast rule missing (game)
 // 単独プレイ必須（交互・同時プレイ禁止）
 assert(gp.text.indexOf('【必須】プレイヤーは1人') >= 0, 'single-player requirement missing');
 assert(gp.text.indexOf('交互プレイ・協力プレイ・2人同時操作') >= 0, 'no-alternating-play rule missing');
+// バリエーション拡充（仕掛けセクション・組み合わせ数）
+assert(gp.text.indexOf('# ゲーム内仕掛け') >= 0, 'gimmicks section missing');
+assert(gp.roll.gimmicks.length >= 1, 'no gimmick picked');
+assert(gp.roll.twists.length >= 2, 'twists should pick 2-3');
+assert(gp.roll.comedy.length >= 2, 'comedy should pick 2-3');
+const combos = gen.comboCount ? gen.comboCount() : 0;
+assert(combos > 1000000, 'combo count too small: ' + combos);
+assert(gp.text.indexOf('undefined') < 0, 'undefined in bus prompt');
 const rg2 = gen.buildGamePrompt(reflectSel, 3);
 const cg = gen.buildIllustPrompt(reflectSel, 3);
 assert(rg2.text.indexOf('笑い設計') >= 0 && cg.text.indexOf('無邪気') >= 0, 'comedy sections missing for other input');

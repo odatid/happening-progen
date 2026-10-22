@@ -22,6 +22,16 @@ function pickN(rng, arr, n){
   while(out.length < n && a.length){ out.push(a.splice(Math.floor(rng()*a.length),1)[0]); }
   return out;
 }
+/* 組み合わせ総数（UI表示用） */
+function nCk(n,k){ if(k<0||k>n) return 0; let r=1; for(let i=1;i<=k;i++){ r=r*(n-k+i)/i; } return Math.round(r); }
+function comboCount(){
+  const tw = (window.HP.TWISTS||[]).length, co = (window.HP.COMEDY||[]).length, gm = (window.HP.GIMMICKS||[]).length;
+  const variants = (window.HP.VARIANTS||[]).length;
+  const twistCombos = nCk(tw,2)+nCk(tw,3);
+  const comedyCombos = nCk(co,2)+nCk(co,3);
+  const gimmickCombos = nCk(gm,1)+nCk(gm,2);
+  return variants * twistCombos * comedyCombos * gimmickCombos;
+}
 
 function hpById(id){ return (window.HP.HAPPI||[]).find(x=>x.id===id); }
 function genreById(id){ return (window.HP.GENRES||[]).find(x=>x.id===id); }
@@ -241,10 +251,11 @@ function roll(sel, seed){
   }
   const vs = variantsOf(genre.id);
   const variant = vs.length ? vs[Math.floor(rng()*vs.length)] : null;
-  const twists = pickN(rng, window.HP.TWISTS, 1 + (rng()<0.4 ? 1 : 0));
-  const comedy = pickN(rng, window.HP.COMEDY, 2);
+  const twists = pickN(rng, window.HP.TWISTS, 2 + (rng()<0.3 ? 1 : 0));
+  const comedy = pickN(rng, window.HP.COMEDY, 2 + (rng()<0.35 ? 1 : 0));
+  const gimmicks = pickN(rng, window.HP.GIMMICKS, 1 + (rng()<0.5 ? 1 : 0));
   const onoGame = pickN(rng, hp.ono, Math.min(3, (hp.ono||[]).length));
-  return { hp, genre, variant, twists, comedy, onoGame, onoIllust: onoGame[0]||'', cfg };
+  return { hp, genre, variant, twists, comedy, gimmicks, onoGame, onoIllust: onoGame[0]||'', cfg };
 }
 
 function bl(label, text){ return '- ' + label + '：' + text; }
@@ -291,7 +302,11 @@ function buildGamePrompt(sel, seed){
   L.push('# ゲームジャンルとゲームデザイン');
   L.push(bl('ジャンル', r.genre.name + ' — ' + r.genre.goal));
   if(r.variant) L.push(bl('実装パターン（操作の型の参考・1つ）', r.variant.name + ' — ' + r.variant.desc));
-  if(r.twists.length) L.push(bl('ツイスト（ひとひねり）', r.twists.map(t=>t.text).join(' ／ ')));
+  if(r.twists.length) L.push(bl('ツイスト（ひとひねり・複数可）', r.twists.map(t=>t.text).join(' ／ ')));
+  L.push('');
+  L.push('# ゲーム内仕掛け（特別要素）');
+  r.gimmicks.forEach(g=>L.push('- ' + g.name + '：' + g.desc));
+  L.push('- 上の仕掛けはエピソードに合わせて調整してよいが、少なくとも1つは実装すること。');
   L.push('');
   L.push('# 笑い設計（最重要・コミカル表現の要件）');
   L.push('- 子どもの起こすハプニングは「悪意のない無邪気な事象」。ゲーム内で子どもを悪者・犯人扱いせず、罰する演出もしない。失敗は「大変なことになった!」というコミカルな事態として表現する。');
@@ -408,6 +423,8 @@ function summary(sel, r){
     variant: r.variant ? (r.variant.name + ' — ' + r.variant.desc) : '—',
     twists: r.twists.map(x=>x.text),
     comedy: r.comedy.map(x=>x.name),
+    gimmicks: r.gimmicks.map(x=>x.name),
+    combos: comboCount(),
     gtheme: t ? t.name : '',
     itaste: it ? it.name : '',
     scene: buildSceneText(r.hp, a),
@@ -417,5 +434,5 @@ function summary(sel, r){
   };
 }
 
-return { detectHappening, roll, buildGamePrompt, buildIllustPrompt, summary };
+return { detectHappening, roll, buildGamePrompt, buildIllustPrompt, summary, comboCount };
 })();
