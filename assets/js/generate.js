@@ -26,11 +26,18 @@ function pickN(rng, arr, n){
 function nCk(n,k){ if(k<0||k>n) return 0; let r=1; for(let i=1;i<=k;i++){ r=r*(n-k+i)/i; } return Math.round(r); }
 function comboCount(){
   const tw = (window.HP.TWISTS||[]).length, co = (window.HP.COMEDY||[]).length, gm = (window.HP.GIMMICKS||[]).length;
-  const variants = (window.HP.VARIANTS||[]).length;
+  const tplTotal = (window.HP.TPL||[]).length;
   const twistCombos = nCk(tw,2)+nCk(tw,3);
   const comedyCombos = nCk(co,2)+nCk(co,3);
   const gimmickCombos = nCk(gm,1)+nCk(gm,2);
-  return variants * twistCombos * comedyCombos * gimmickCombos;
+  return tplTotal * twistCombos * comedyCombos * gimmickCombos;
+}
+/* ハプニング種別に対応するゲームテンプレート（種別専用 → 汎用HP00 の順） */
+function templatesFor(hpId){
+  const all = window.HP.TPL || [];
+  const own = all.filter(t=>t.hpId===hpId);
+  if(own.length) return own;
+  return all.filter(t=>t.hpId==='HP00');
 }
 
 function hpById(id){ return (window.HP.HAPPI||[]).find(x=>x.id===id); }
@@ -250,12 +257,14 @@ function roll(sel, seed){
     genre = genreById(sel.genre) || (window.HP.GENRES||[])[0];
   }
   const vs = variantsOf(genre.id);
-  const variant = vs.length ? vs[Math.floor(rng()*vs.length)] : null;
   const twists = pickN(rng, window.HP.TWISTS, 2 + (rng()<0.3 ? 1 : 0));
   const comedy = pickN(rng, window.HP.COMEDY, 2 + (rng()<0.35 ? 1 : 0));
   const gimmicks = pickN(rng, window.HP.GIMMICKS, 1 + (rng()<0.5 ? 1 : 0));
+  const tplPool = templatesFor(hp.id);
+  const tpl = tplPool.length ? tplPool[Math.floor(rng()*tplPool.length)] : null;
+  const variant = tpl ? null : (vs.length ? vs[Math.floor(rng()*vs.length)] : null);
   const onoGame = pickN(rng, hp.ono, Math.min(3, (hp.ono||[]).length));
-  return { hp, genre, variant, twists, comedy, gimmicks, onoGame, onoIllust: onoGame[0]||'', cfg };
+  return { hp, genre, variant, tpl, twists, comedy, gimmicks, onoGame, onoIllust: onoGame[0]||'', cfg };
 }
 
 function bl(label, text){ return '- ' + label + '：' + text; }
@@ -301,6 +310,13 @@ function buildGamePrompt(sel, seed){
   L.push('');
   L.push('# ゲームジャンルとゲームデザイン');
   L.push(bl('ジャンル', r.genre.name + ' — ' + r.genre.goal));
+  if(r.tpl){
+    L.push('');
+    L.push('# ゲームコア設計（このハプニング専用テンプレート・主軸）');
+    L.push(bl('テンプレート「' + r.tpl.name + '」', r.tpl.core));
+    L.push('- このコアの遊びをエピソードの舞台・人物・小物・展開で実装すること。テンプレートの型とエピソードの内容が両方伝わることが必須。テンプレートの例文・小物をそのまま使わず、エピソードに合わせて置き換えること。');
+    L.push('- コアの目的・操作・得点が「タイトルとエピソードの内容」と直接つながるように、用語をエピソードの言葉に寄せること（例：エピソードの物・場所・人の名前を画面表示・演出名に使う）。');
+  }
   if(r.variant) L.push(bl('実装パターン（操作の型の参考・1つ）', r.variant.name + ' — ' + r.variant.desc));
   if(r.twists.length) L.push(bl('ツイスト（ひとひねり・複数可）', r.twists.map(t=>t.text).join(' ／ ')));
   L.push('');
@@ -424,6 +440,7 @@ function summary(sel, r){
     twists: r.twists.map(x=>x.text),
     comedy: r.comedy.map(x=>x.name),
     gimmicks: r.gimmicks.map(x=>x.name),
+    tpl: r.tpl ? (r.tpl.name + ' — ' + r.tpl.core) : '',
     combos: comboCount(),
     gtheme: t ? t.name : '',
     itaste: it ? it.name : '',

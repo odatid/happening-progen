@@ -45,7 +45,7 @@ function chipsHTML(sum){
   const c = [];
   c.push('<span class="chip k-hp"><b>ハプニング:</b> ' + esc(sum.hp) + '</span>');
   c.push('<span class="chip k-genre"><b>ジャンル:</b> ' + esc(sum.genre) + '</span>');
-  c.push('<span class="chip k-variant"><b>実装パターン:</b> ' + esc(sum.variant) + '</span>');
+  if(sum.tpl) c.push('<span class="chip k-variant"><b>コア設計:</b> ' + esc(sum.tpl) + '</span>');
   sum.twists.forEach(t=>c.push('<span class="chip k-twist"><b>ツイスト:</b> ' + esc(t) + '</span>'));
   sum.comedy.forEach(t=>c.push('<span class="chip k-comedy"><b>笑い:</b> ' + esc(t) + '</span>'));
   sum.gimmicks.forEach(t=>c.push('<span class="chip k-gimmick"><b>仕掛け:</b> ' + esc(t) + '</span>'));

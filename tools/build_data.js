@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const SHEETS = ['設定','マスタ_ハプニング','パターン_ジャンル','バリエーション','ツイスト','コメディ','ゲーム内仕掛け','パターン_テイスト','パターン_イラスト'];
+const SHEETS = ['設定','マスタ_ハプニング','パターン_ジャンル','バリエーション','ゲームテンプレート','ツイスト','コメディ','ゲーム内仕掛け','パターン_テイスト','パターン_イラスト'];
 const csvDir = path.join(__dirname, '..', 'csv');
 const outFile = path.join(__dirname, '..', 'assets', 'js', 'data.js');
 

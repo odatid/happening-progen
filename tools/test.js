@@ -120,6 +120,28 @@ assert(gp.roll.comedy.length >= 2, 'comedy should pick 2-3');
 const combos = gen.comboCount ? gen.comboCount() : 0;
 assert(combos > 1000000, 'combo count too small: ' + combos);
 assert(gp.text.indexOf('undefined') < 0, 'undefined in bus prompt');
+
+// 10) 種別専用テンプレート（落書き→おもちゃの仕分け 問題の修正）
+const allTpl = window.HP.TPL || [];
+window.HP.HAPPI.forEach(h=>{
+  const n = allTpl.filter(t=>t.hpId===h.id).length;
+  assert(n >= 3, 'not enough templates for ' + h.id + ': ' + n);
+});
+const crayonSel = { title:'壁に家族の似顔絵美術館', story:'トイレに行って戻ると、白い壁にクレヨンで家族全員の似顔絵が完成していた。犬には首輪まで描かれていた。', author:'', pack:gen.detectHappening('白い壁にクレヨンで似顔絵を描かれた'), genre:'omakase', gtheme:'pop', it:'pop' };
+assert(crayonSel.pack === 'HP05', 'crayon detected as ' + crayonSel.pack);
+const cg2 = gen.buildGamePrompt(crayonSel, 21);
+assert(cg2.text.indexOf('# ゲームコア設計') >= 0, 'core template section missing');
+assert(cg2.roll.tpl && cg2.roll.tpl.hpId === 'HP05', 'crayon must use crayon-specific template, got ' + (cg2.roll.tpl && cg2.roll.tpl.hpId));
+assert(cg2.text.indexOf('仕分け箱') < 0, 'generic toy-sort variant leaked into crayon prompt');
+assert(cg2.text.indexOf('おもちゃの砦') < 0, 'HP17 toy-fort leaked into crayon prompt');
+['壁','クレヨン','似顔絵'].forEach(k=>{ assert(cg2.text.indexOf(k) >= 0, 'crayon prompt missing story keyword: ' + k); });
+// 全種別でテンプレが主軸になり、汎用バリアントが消えること
+['HP01','HP05','HP08','HP12','HP19'].forEach(hp=>{
+  const s2 = { title:'テスト', story:'テスト。', author:'', pack:hp, genre:'omakase', gtheme:'pop', it:'pop' };
+  const p2 = gen.buildGamePrompt(s2, 5);
+  assert(p2.text.indexOf('# ゲームコア設計') >= 0, 'core section missing for ' + hp);
+  assert(p2.text.indexOf('仕分け箱') < 0, 'generic variant leaked for ' + hp);
+});
 const rg2 = gen.buildGamePrompt(reflectSel, 3);
 const cg = gen.buildIllustPrompt(reflectSel, 3);
 assert(rg2.text.indexOf('笑い設計') >= 0 && cg.text.indexOf('無邪気') >= 0, 'comedy sections missing for other input');

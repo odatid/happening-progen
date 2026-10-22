@@ -8,7 +8,7 @@ window.HP = window.HP || {};
 'use strict';
 
 const SHEETS = [
-  '設定','マスタ_ハプニング','パターン_ジャンル','バリエーション','ツイスト','コメディ','ゲーム内仕掛け','パターン_テイスト','パターン_イラスト'
+  '設定','マスタ_ハプニング','パターン_ジャンル','バリエーション','ゲームテンプレート','ツイスト','コメディ','ゲーム内仕掛け','パターン_テイスト','パターン_イラスト'
 ];
 
 /* ---------------- CSV ---------------- */
@@ -75,6 +75,10 @@ function build(S){
   }));
 
   out.GIMMICKS = g('ゲーム内仕掛け').filter(r=>r.id);
+
+  out.TPL = g('ゲームテンプレート').filter(r=>r.id).map(r=>({
+    id:r.id, hpId:r.hp_id, name:r.name, core:r.core
+  }));
 
   out.TASTES = g('パターン_テイスト').filter(r=>r.id).map(r=>({
     id:r.id, name:r.name, style:r.style_text, palette:r.palette_text,
