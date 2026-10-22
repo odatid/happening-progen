@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HAP//GEN — 子育てハプニング→ゲーム&イラスト 生成プロンプトツール</title>
+<meta name="description" content="区民から投稿された子育てハプニングを、遊べるミニゲームと展示パネル1コマの生成AI用プロンプトに落とす。笑える子育てハプニングミュージアムのための企画ツール。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=M+PLUS+Rounded+1c:wght@400;700;800&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="edge" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="bar-in">
+    <a class="wordmark" href="#" aria-label="最初に戻る">
+      <span class="wm-main">HAP<span class="slash">//</span>GEN</span>
+      <span class="wm-sub">ハプニングを、あそべる形に。</span>
+    </a>
+    <div class="bar-right">
+      <button class="code-chip" id="sessionChip" type="button" title="この企画のセッションリンクをコピーします。別の端末で続きを開けます。">
+        <span class="cc-label">SESSION</span><span class="cc-val" id="sessionCode">—</span>
+      </button>
+      <span class="db-chip local" id="dbChip" title="データの読み込み元">…</span>
+      <button class="icon-btn" id="btnPrint" type="button" title="印刷 / PDF保存">印刷</button>
+      <button class="icon-btn" id="btnRestart" type="button" title="入力を全部消して最初から">最初から</button>
+    </div>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- ===== 1. 入力フォーム ===== -->
+  <section class="card" id="formCard">
+    <h2 class="band"><span class="no">1</span>ハプニングを入力する</h2>
+
+    <div class="field">
+      <label for="fTitle">ハプニングタイトル <em class="req">必須</em></label>
+      <input type="text" id="fTitle" maxlength="40" placeholder="例：牛乳を全部こぼされた朝">
+      <div class="count"><span id="cTitle">0</span>/40</div>
+    </div>
+
+    <div class="field">
+      <label for="fStory">エピソード本文 <em class="req">必須</em></label>
+      <textarea id="fStory" maxlength="400" placeholder="例：洗濯物を干しに行った隙に、リビングで子どもが牛乳パックを両手で握りつぶしていた。床も壁も、犬まで牛乳まみれ。"></textarea>
+      <div class="count"><span id="cStory">0</span>/400</div>
+    </div>
+
+    <div class="field">
+      <label for="fAuthor">投稿者ニックネーム（任意）</label>
+      <input type="text" id="fAuthor" maxlength="20" placeholder="例：3歳児パパ">
+      <div class="count"><span id="cAuthor">0</span>/20</div>
+    </div>
+
+    <div class="row">
+      <div class="field grow">
+        <label for="fPack">ハプニング種別 <span class="hint">（本文から自動判定・手動で変えられます）</span></label>
+        <select id="fPack"></select>
+      </div>
+      <button class="ghost" id="btnSample" type="button">サンプルを入れる</button>
+    </div>
+
+    <div class="optgroup">
+      <div class="ttl">どういうジャンルのゲームにしたい？</div>
+      <div class="radios" id="rGenre">
+        <label class="radio"><input type="radio" name="genre" value="action"><span class="face">アクション</span></label>
+        <label class="radio"><input type="radio" name="genre" value="puzzle"><span class="face">パズル</span></label>
+        <label class="radio"><input type="radio" name="genre" value="match"><span class="face">絵合わせ</span></label>
+        <label class="radio"><input type="radio" name="genre" value="omakase" checked><span class="face">おまかせ</span></label>
+      </div>
+    </div>
+
+    <div class="optgroup">
+      <div class="ttl">ゲームのテイスト</div>
+      <div class="radios" id="rGTheme">
+        <label class="radio"><input type="radio" name="gtheme" value="pop" checked><span class="face">アメコミPOP風</span></label>
+        <label class="radio"><input type="radio" name="gtheme" value="pixel"><span class="face">16ビットドット</span></label>
+      </div>
+    </div>
+
+    <div class="optgroup">
+      <div class="ttl">展示パネル用 1コマイラストのテイスト <span class="hint">（ゲームと別に選べます）</span></div>
+      <div class="radios small" id="rITaste">
+        <label class="radio"><input type="radio" name="itaste" value="gekiga"><span class="face">劇画調</span></label>
+        <label class="radio"><input type="radio" name="itaste" value="pop" checked><span class="face">アメコミPOP調</span></label>
+        <label class="radio"><input type="radio" name="itaste" value="photo"><span class="face">実写風</span></label>
+      </div>
+    </div>
+
+    <button class="generate" id="btnGen">生成する</button>
+    <p class="note">※ 入力とパターンDBの組み合わせから「生成AI用プロンプト」を作ります。APIは呼ばず、実際の生成はあなたの生成AIサービス（ChatGPT / Gemini / 画像生成AI など）で行ってください。</p>
+  </section>
+
+  <!-- ===== 2. 生成結果 ===== -->
+  <section class="card" id="outCard" hidden>
+    <h2 class="band"><span class="no">2</span>生成結果</h2>
+
+    <div class="sum" id="sumChips"></div>
+    <div class="row">
+      <button class="ghost" id="btnReroll" type="button">バリエーションを変える</button>
+      <button class="ghost" id="btnBack" type="button">入力に戻る</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tabbtn on" id="tabGame" role="tab">ゲーム生成プロンプト</button>
+      <button class="tabbtn" id="tabIllust" role="tab">イラスト生成プロンプト</button>
+    </div>
+
+    <div class="pane" id="paneGame">
+      <textarea id="outGame" readonly spellcheck="false"></textarea>
+      <div class="btnrow">
+        <button class="main" id="btnCopyGame" type="button">コピー</button>
+        <button class="sub" id="btnDlGame" type="button">.mdでダウンロード</button>
+      </div>
+    </div>
+
+    <div class="pane" id="paneIllust" hidden>
+      <textarea id="outIllust" readonly spellcheck="false"></textarea>
+      <div class="btnrow">
+        <button class="main" id="btnCopyIllust" type="button">コピー</button>
+        <button class="sub" id="btnDlIllust" type="button">.mdでダウンロード</button>
+      </div>
+    </div>
+
+    <div class="btnrow">
+      <button class="main" id="btnDlBoth" type="button">両方まとめてダウンロード</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span id="footCredit">笑える子育てハプニングミュージアム（仮）｜東京情報デザイン専門職大学 大舘研究室</span>
+  <span class="foot-note">静的HTMLのみで動作（GitHub Pages配置想定）／パターンDBは csv/ で管理</span>
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/db.js"></script>
+<script src="assets/js/generate.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

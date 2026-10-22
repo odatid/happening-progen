@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HAP//GEN — 子育てハプニング→ゲーム&イラスト 生成プロンプトツール</title>
+<meta name="description" content="区民から投稿された子育てハプニングを、遊べるミニゲームと展示パネル1コマの生成AI用プロンプトに落とす。笑える子育てハプニングミュージアムのための企画ツール。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=M+PLUS+Rounded+1c:wght@400;700;800&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#141414; --paper:#fffbe9; --card:#ffffff;
+  --cyan:#00c2ff; --yellow:#ffe500; --red:#e8112d; --blue:#2b50ff;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --gothic:'Zen Kaku Gothic New','M PLUS Rounded 1c',sans-serif;
+  --round:'M PLUS Rounded 1c','Hiragino Maru Gothic ProN','Yu Gothic',sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+  margin:0;color:var(--ink);background:var(--paper);
+  background-image:radial-gradient(rgba(0,0,0,.07) 1.5px, transparent 1.6px);
+  background-size:16px 16px;
+  font-family:var(--round);line-height:1.65;font-size:15px;
+}
+.edge{height:10px;border-bottom:4px solid var(--ink);
+  background:repeating-linear-gradient(45deg,var(--yellow) 0 22px,var(--cyan) 22px 44px,var(--red) 44px 66px);}
+
+/* ---------- ヘッダー ---------- */
+.bar{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:4px solid var(--ink);}
+.bar-in{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;}
+.wordmark{text-decoration:none;color:var(--ink);display:flex;flex-direction:column;line-height:1.25;}
+.wm-main{font-family:var(--gothic);font-weight:900;font-size:22px;letter-spacing:.02em;}
+.slash{color:var(--red);}
+.wm-sub{font-size:11px;color:#555;font-weight:700;}
+.bar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.code-chip,.icon-btn,.db-chip{
+  border:3px solid var(--ink);border-radius:10px;background:#fff;
+  font-family:var(--round);font-weight:700;font-size:12px;padding:6px 10px;
+  box-shadow:3px 3px 0 var(--ink);cursor:pointer;
+}
+.code-chip:active,.icon-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink);}
+.cc-val{font-family:var(--mono);margin-left:6px;}
+.db-chip{cursor:default;}
+.db-chip.csv{background:var(--cyan);}
+.db-chip.api{background:var(--yellow);}
+.db-chip.local{background:#e2e2e2;}
+
+/* ---------- レイアウト ---------- */
+.shell{max-width:960px;margin:0 auto;padding:28px 16px 60px;}
+.card{
+  background:var(--card);border:4px solid var(--ink);border-radius:16px;
+  box-shadow:8px 8px 0 var(--ink);padding:20px 18px;margin:0 0 32px;
+}
+.band{
+  display:inline-block;margin:-34px 0 14px;background:var(--cyan);
+  border:4px solid var(--ink);border-radius:12px;padding:6px 16px;
+  font-family:var(--gothic);font-weight:900;font-size:17px;
+  box-shadow:4px 4px 0 var(--ink);transform:rotate(-1deg);
+}
+.band .no{
+  display:inline-block;background:var(--ink);color:#fff;border-radius:50%;
+  width:24px;height:24px;line-height:24px;text-align:center;font-size:13px;margin-right:8px;
+}
+
+/* ---------- フォーム ---------- */
+.field{margin:14px 0 4px;}
+.field label{display:block;font-weight:800;font-size:14px;}
+.req{color:var(--red);font-style:normal;font-size:12px;margin-left:4px;}
+.hint{font-weight:400;font-size:12px;color:#555;}
+input[type=text],textarea,select{
+  width:100%;border:3px solid var(--ink);border-radius:10px;padding:10px 12px;
+  font-size:16px;font-family:var(--round);background:#fffef6;outline:none;
+}
+input:focus,textarea:focus,select:focus{background:#e9fbff;}
+textarea{min-height:110px;resize:vertical;}
+.count{font-size:11px;text-align:right;color:#777;}
+.row{display:flex;gap:10px;align-items:flex-end;margin:14px 0;flex-wrap:wrap;}
+.row .grow{flex:1;min-width:220px;}
+.ghost{
+  border:3px solid var(--ink);border-radius:10px;background:#fff;font-weight:700;
+  font-size:13px;padding:10px 14px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);font-family:var(--round);
+}
+.ghost:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink);}
+.optgroup{margin:18px 0 6px;}
+.optgroup .ttl{font-weight:800;font-size:14px;margin-bottom:8px;}
+.radios{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
+.radio{position:relative;}
+.radio input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;}
+.radio .face{
+  display:block;border:3px solid var(--ink);border-radius:12px;padding:10px 8px;
+  text-align:center;font-weight:800;font-size:14px;background:#fff;
+  box-shadow:4px 4px 0 var(--ink);transition:.08s;pointer-events:none;
+}
+.radio input:checked+.face{background:var(--yellow);transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink);}
+.radio input:focus-visible+.face{outline:3px dashed var(--blue);}
+.generate{
+  display:block;width:100%;margin-top:20px;border:4px solid var(--ink);border-radius:14px;
+  background:var(--red);color:#fff;font-family:var(--gothic);font-weight:900;font-size:20px;
+  padding:16px;cursor:pointer;box-shadow:6px 6px 0 var(--ink);
+}
+.generate:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink);}
+.note{font-size:12px;color:#555;margin-top:10px;}
+
+/* ---------- 出力 ---------- */
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px;}
+.sum .chip{
+  border:3px solid var(--ink);border-radius:10px;padding:4px 10px;font-size:12px;
+  font-weight:700;background:#fff;box-shadow:3px 3px 0 var(--ink);
+}
+.sum .chip b{font-weight:800;}
+.sum .chip.k-hp{background:var(--cyan);}
+.sum .chip.k-genre{background:var(--yellow);}
+.sum .chip.k-variant{background:#ffd9e2;}
+.sum .chip.k-twist{background:#d9f2ff;}
+.sum .chip.k-taste{background:#e5dcff;}
+.tabs{display:flex;gap:10px;margin:18px 0 12px;flex-wrap:wrap;}
+.tabbtn{
+  border:3px solid var(--ink);background:#fff;border-radius:12px;padding:8px 14px;
+  font-weight:800;font-size:14px;cursor:pointer;box-shadow:4px 4px 0 var(--ink);font-family:var(--round);
+}
+.tabbtn.on{background:var(--cyan);}
+.pane textarea{
+  font-family:var(--mono);font-size:12.5px;line-height:1.6;
+  min-height:380px;white-space:pre-wrap;
+}
+.btnrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.btnrow .main,.btnrow .sub{
+  border:3px solid var(--ink);border-radius:10px;padding:10px 16px;font-weight:800;
+  font-size:14px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);font-family:var(--round);
+}
+.btnrow .main{background:var(--yellow);}
+.btnrow .sub{background:#fff;}
+.btnrow .main:active,.btnrow .sub:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink);}
+
+.foot{max-width:960px;margin:0 auto;padding:10px 16px 34px;font-size:12px;color:#555;display:flex;flex-direction:column;gap:2px;}
+.foot-note{font-size:11px;color:#888;}
+
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+  opacity:0;transition:.25s;background:var(--ink);color:#fff;padding:10px 18px;
+  border-radius:12px;font-weight:700;z-index:99;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:600px){
+  .bar-in{padding:8px 10px;}
+  .wm-sub{display:none;}
+  .shell{padding:22px 10px 50px;}
+  .pane textarea{min-height:300px;}
+}
+
+@media print{
+  body{background:#fff;}
+  .edge,.bar,.foot,.toast,.btnrow,.tabs,.note,.sum{display:none!important;}
+  .card{box-shadow:none;border-width:2px;}
+  #formCard{display:none!important;}
+  #outCard{display:block!important;}
+  .pane{display:block!important;margin-bottom:18px;}
+  .pane[hidden]{display:block!important;}
+  .pane textarea{border:1px solid #999;height:auto;min-height:0;font-size:10px;white-space:pre-wrap;}
+}
+
+</style>
+</head>
+<body>
+<div class="edge" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="bar-in">
+    <a class="wordmark" href="#" aria-label="最初に戻る">
+      <span class="wm-main">HAP<span class="slash">//</span>GEN</span>
+      <span class="wm-sub">ハプニングを、あそべる形に。</span>
+    </a>
+    <div class="bar-right">
+      <button class="code-chip" id="sessionChip" type="button" title="この企画のセッションリンクをコピーします。別の端末で続きを開けます。">
+        <span class="cc-label">SESSION</span><span class="cc-val" id="sessionCode">—</span>
+      </button>
+      <span class="db-chip local" id="dbChip" title="データの読み込み元">…</span>
+      <button class="icon-btn" id="btnPrint" type="button" title="印刷 / PDF保存">印刷</button>
+      <button class="icon-btn" id="btnRestart" type="button" title="入力を全部消して最初から">最初から</button>
+    </div>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- ===== 1. 入力フォーム ===== -->
+  <section class="card" id="formCard">
+    <h2 class="band"><span class="no">1</span>ハプニングを入力する</h2>
+
+    <div class="field">
+      <label for="fTitle">ハプニングタイトル <em class="req">必須</em></label>
+      <input type="text" id="fTitle" maxlength="40" placeholder="例：牛乳を全部こぼされた朝">
+      <div class="count"><span id="cTitle">0</span>/40</div>
+    </div>
+
+    <div class="field">
+      <label for="fStory">エピソード本文 <em class="req">必須</em></label>
+      <textarea id="fStory" maxlength="400" placeholder="例：洗濯物を干しに行った隙に、リビングで子どもが牛乳パックを両手で握りつぶしていた。床も壁も、犬まで牛乳まみれ。"></textarea>
+      <div class="count"><span id="cStory">0</span>/400</div>
+    </div>
+
+    <div class="field">
+      <label for="fAuthor">投稿者ニックネーム（任意）</label>
+      <input type="text" id="fAuthor" maxlength="20" placeholder="例：3歳児パパ">
+      <div class="count"><span id="cAuthor">0</span>/20</div>
+    </div>
+
+    <div class="row">
+      <div class="field grow">
+        <label for="fPack">ハプニング種別 <span class="hint">（本文から自動判定・手動で変えられます）</span></label>
+        <select id="fPack"></select>
+      </div>
+      <button class="ghost" id="btnSample" type="button">サンプルを入れる</button>
+    </div>
+
+    <div class="optgroup">
+      <div class="ttl">どういうジャンルのゲームにしたい？</div>
+      <div class="radios" id="rGenre">
+        <label class="radio"><input type="radio" name="genre" value="action"><span class="face">アクション</span></label>
+        <label class="radio"><input type="radio" name="genre" value="puzzle"><span class="face">パズル</span></label>
+        <label class="radio"><input type="radio" name="genre" value="match"><span class="face">絵合わせ</span></label>
+        <label class="radio"><input type="radio" name="genre" value="omakase" checked><span class="face">おまかせ</span></label>
+      </div>
+    </div>
+
+    <div class="optgroup">
+      <div class="ttl">ゲームのテイスト</div>
+      <div class="radios" id="rGTheme">
+        <label class="radio"><input type="radio" name="gtheme" value="pop" checked><span class="face">アメコミPOP風</span></label>
+        <label class="radio"><input type="radio" name="gtheme" value="pixel"><span class="face">16ビットドット</span></label>
+      </div>
+    </div>
+
+    <div class="optgroup">
+      <div class="ttl">展示パネル用 1コマイラストのテイスト <span class="hint">（ゲームと別に選べます）</span></div>
+      <div class="radios small" id="rITaste">
+        <label class="radio"><input type="radio" name="itaste" value="gekiga"><span class="face">劇画調</span></label>
+        <label class="radio"><input type="radio" name="itaste" value="pop" checked><span class="face">アメコミPOP調</span></label>
+        <label class="radio"><input type="radio" name="itaste" value="photo"><span class="face">実写風</span></label>
+      </div>
+    </div>
+
+    <button class="generate" id="btnGen">生成する</button>
+    <p class="note">※ 入力とパターンDBの組み合わせから「生成AI用プロンプト」を作ります。APIは呼ばず、実際の生成はあなたの生成AIサービス（ChatGPT / Gemini / 画像生成AI など）で行ってください。</p>
+  </section>
+
+  <!-- ===== 2. 生成結果 ===== -->
+  <section class="card" id="outCard" hidden>
+    <h2 class="band"><span class="no">2</span>生成結果</h2>
+
+    <div class="sum" id="sumChips"></div>
+    <div class="row">
+      <button class="ghost" id="btnReroll" type="button">バリエーションを変える</button>
+      <button class="ghost" id="btnBack" type="button">入力に戻る</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tabbtn on" id="tabGame" role="tab">ゲーム生成プロンプト</button>
+      <button class="tabbtn" id="tabIllust" role="tab">イラスト生成プロンプト</button>
+    </div>
+
+    <div class="pane" id="paneGame">
+      <textarea id="outGame" readonly spellcheck="false"></textarea>
+      <div class="btnrow">
+        <button class="main" id="btnCopyGame" type="button">コピー</button>
+        <button class="sub" id="btnDlGame" type="button">.mdでダウンロード</button>
+      </div>
+    </div>
+
+    <div class="pane" id="paneIllust" hidden>
+      <textarea id="outIllust" readonly spellcheck="false"></textarea>
+      <div class="btnrow">
+        <button class="main" id="btnCopyIllust" type="button">コピー</button>
+        <button class="sub" id="btnDlIllust" type="button">.mdでダウンロード</button>
+      </div>
+    </div>
+
+    <div class="btnrow">
+      <button class="main" id="btnDlBoth" type="button">両方まとめてダウンロード</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span id="footCredit">笑える子育てハプニングミュージアム（仮）｜東京情報デザイン専門職大学 大舘研究室</span>
+  <span class="foot-note">静的HTMLのみで動作（GitHub Pages配置想定）／パターンDBは csv/ で管理</span>
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* =========================================================
+   HAP//GEN — DB接続設定
+   GitHub Pages に上げる前に、ここだけ書き換える。
+   ========================================================= */
+window.HP_CONFIG = {
+  /* 'csv'   : 公開したスプレッドシートのCSV / 同じリポジトリの csv/ を読む（GitHub Pages だけで完結）
+     'api'   : Google Apps Script の Web App から JSON を受け取る（非公開シートも可）
+     'local' : 同梱の data.js を使う（オフライン・予備） */
+  MODE: 'csv',
+
+  /* MODE='api' のとき：Apps Script をデプロイして出た URL を貼る
+     例）https://script.google.com/macros/s/AKfycb..../exec */
+  API_URL: '',
+
+  /* MODE='csv' のとき：公開CSVの置き場所（末尾スラッシュあり）
+     tools/sheet_export.gs の exportCsv() で Google ドライブに書き出した公開URL、
+     または同じリポジトリに置いた csv/ フォルダ */
+  CSV_BASE: 'csv/',
+
+  /* 起動時にDBが読めなかったとき、同梱の data.js で動かす（イベント当日を止めない） */
+  FALLBACK: true,
+
+  /* 読み込みログをコンソールに出す */
+  DEBUG: true
+};
+
+
+/* 自動生成ファイル: node tools/build_data.js で csv/*.csv から出力。
+   直接編集しない。編集は csv/*.csv を行い、再実行する。 */
+window.HP_DATA = {};
+window.HP_DATA["設定"] = "key,value\ntool_name,HAP//GEN\nevent_name,笑える子育てハプニングミュージアム\nvenue,江戸川区メタバース区役所\norganizer,東京情報デザイン専門職大学 大舘研究室\ngame_min_sec,30\ngame_max_sec,90\nillust_ratio,4:5\nillust_size,1080x1350\npanel_print,A4縦\n";
+window.HP_DATA["マスタ_ハプニング"] = "id,label,keywords,sample_title,sample_episode,scene_hook,good_items,bad_items,player,player_label,game_hook,onomatopoe,illust_idea\nHP01,牛乳・飲み物こぼれ,\"牛乳,ミルク,こぼし,こぼれ,ジュース,水,コップ,麦茶,コーヒー\",牛乳を全部こぼされた朝,\"洗濯物を干しに行った隙に、リビングで子どもが牛乳パックを両手で握りつぶしていた。床も壁も、犬まで牛乳まみれだった。\",\"朝のリビング。床に広がる白い水たまりと、倒れた牛乳パック。\",\"🥛,🍼,🧃,☕\",\"🥦,🧦,💧\",🍽️,お皿,\"こぼれる前の飲み物をお皿で受け止める / 床の水たまりをすばやくふき取る\",\"ざっぱーん!,OOPS!,MY GOD!,ヌルヌル…,WAAAH!\",\"倒れた牛乳パックから飛び散る牛乳。驚いて両手を広げる親と、なぜか得意げな子ども。\"\nHP02,トイレダッシュ,\"トイレ,うんち,うんこ,おしっこ,おまる,漏らす\",トイレまであと300メートル,\"商店街で「うんち!」が宣言された。迷路みたいな路地、避けきれない人混み、そして最後の一本道。親子の全力ダッシュ3分間。\",\"人混みと路地。視線の先に光るトイレのピクトグラム。\",\"🧻,🚽,💧,⭐\",\"🚧,🌀,🦠\",🧑,親(子を背負い),\"「うんち!」と言い出した子を背負って、人混みをよけながらトイレへダッシュ\",\"EMERGENCY!,うんち!,ダーッシュ!,まにあえ〜!,WHAT!?\",\"子を背負って全力疾走する親。後ろに青白いオーラ、前方に光るトイレサイン。\"\nHP03,ごはん大乱戦,\"ごはん,ご飯,食,食べ,たべ,離乳食,野菜,夕食,朝食,おやつ,パン,ランチ,口\",夕食が床に消えていく,\"ごはんを口に運ぶたび、いらないものが床に落ちていく。終わってみれば、床に落ちた量のほうが多かった日があった。\",\"食卓の上。飛び散るごはん粒と野菜。\",\"🍚,🥕,🍎,🍜\",\"🧦,🪀,📱\",👅,おくち,\"口に運べる食べものと、食べちゃいけないものを見分けてキャッチする\",\"あーん!,もぐもぐ,べっぴょ!!,UHHH…,もういや!\",\"食卓でスプーンを高くかざす子ども。飛び散るごはん粒と野菜、後ろで固まる親。\"\nHP04,おひるね大作戦,\"寝ない,寝た,お昼寝,おひるね,寝かしつけ,眠,ねむ,夜泣き,寝返り,添い寝,おねんね\",絵本3冊でも寝なかった夜,\"3冊の絵本と子守唄をフル投入したが、本人は最後までお目々ぱっちり。眠りに落ちたのは、添い寝した親のほうだった。\",\"薄暗い寝室。ふとんの上、頭上に月光とZの文字。\",\"😴,🌙,🧸,⭐\",\"🥁,📢,🔔\",🛏️,ふとん,\"眠くなるアイテムを集めて子どもを寝かしつける / うるさい音をよけて夢をまもる\",\"Zzz…,ねむい…,SHHH!,んぁ?,まだねない!\",\"ふとんで熟睡する子どもと、隣で身動きできない親。頭上にZの文字と月光。\"\nHP05,らくがき大作戦,\"落書き,らくがき,描い,かいた,クレヨン,絵の具,ペン,壁に描\",壁に家族の似顔絵美術館,\"トイレに行って戻ると、白い壁にクレヨンで「家族全員の似顔絵」が完成していた。犬には、しっかり首輪まで描かれていた。\",\"白い壁や畳に広がる、カラフルで大胆な落書き。\",\"🖍️,🎨,⭐,🌸\",\"🧦,🍕,💧\",🧽,スポンジ,\"壁を走る落書きをスポンジで消す / いい絵と消しちゃいけない絵を見分ける\",\"描いちゃった!,WHAT!?,最高傑作!,ピカソ!?,うわー!\",\"壁いっぱいの「作品」の前でドヤ顔の子ども。後ろで言葉を失う親。\"\nHP06,お風呂大爆発,\"お風呂,ふろ,シャワー,バス,お湯,泡,入らない\",お風呂から脱走忍者,\"お風呂の湯船に、パジャマのまま飛び込もうとして抱き止めた。その2秒後、泡だらけの姿で脱走を開始した。\",\"バスルーム。床までこぼれる泡と、湯船の縁。\",\"🛁,🧼,🦆,⭐\",\"🧦,📱,🪣\",🪣,おけ,\"泡を集めてお風呂を完成させる / 脱走する子をよけいながら洗い上げる\",\"じゃぶじゃぶ!,ぶくぶく,入らない〜!,SHHH!,WAAAH!\",\"泡まみれで風船みたいにふくらんだ子ども。バスタブからこぼれ落ちる泡。\"\nHP07,スマホとり合い,\"スマホ,携帯,スマフォ,アイフォン,電話,充電,動画\",正座でにらむスマホ,\"スマホで動画を見ていたら、画面の前で誰かが直立不動の正座を始めた。じりじりと距離を詰めてくるその手を、止められない。\",\"リビングのソファ。画面の前で正座する子どもの影。\",\"📱,🔋,⭐,🎧\",\"🧸,🍕,💧\",📱,スマホ,\"子どもの手からスマホをまもる / とられないようにすばやくスワイプ\",\"じーっ,取り返した!,NOOO!,ぎゃー,WHAT!?\",\"スマホを高くかかげる親と、飛びつく子ども。静止画なのに動きが伝わる構図。\"\nHP00,あるある汎用,,玩具の海で転んだ朝,\"玩具箱をひっくり返した翌朝、そこを通り抜けようとして親が転んだ。子どもは「ぱぱ だいじょうぶ?」と笑いながら撮影を続けていた。\",\"リビング。散らかった玩具の海。\",\"🧸,🍼,🧦,⭐,🍱\",\"🥦,💧,🌪️,🐸\",🛒,かご,\"家じゅうのハプニングが飛び出す、総合あるあるゲーム\",\"OOPS!,あるある!,WAAAH!,ピンチ!,WHAT!?\",\"玩具の海の真ん中で高笑いする子どもと、転んだ親。\"\n";
+window.HP_DATA["パターン_ジャンル"] = "id,name,goal_text,controls_pc,controls_sp,loop_text,score_text,win_text,lose_text,duration_sec\nG_ACTION,アクション,\"落ちてくる・流れてくるものに即反応して、キャッチ/よける/仕分けるシンプルアクション。\",\"← → または A D キー、マウスドラッグ\",\"画面ドラッグ、画面下の左右タッチボタン\",\"30〜60秒間、出現ペースがだんだん速くなる。1プレイで勝敗が決まる。\",\"キャッチ+10点×コンボ。ミスでピンチゲージ+15%。\",\"タイムアップ時にピンチゲージ100%未満なら成功。\",\"ピンチゲージが100%に達したら即終了。\",60\nG_PUZZLE,パズル,\"あらわれたものを、2つの箱のどちらへ仕分けるか判断するコミカルパズル。\",\"← → キーまたはクリック\",\"タップ（画面の左半分/右半分）\",\"1問ずつ出題。30〜60秒で何問正解できるか競う。\",\"正解+12点×コンボ。はずれでピンチゲージ+12%。\",\"タイムアップ時の正解数とピンチゲージで判定。\",\"ピンチゲージ100%で即終了。\",60\nG_MATCH,絵合わせ,\"カードをめくって同じ絵をそろえる神経衰弱。位置を覚える力が勝負。\",\"クリックでカードをめくる\",\"タップでカードをめくる\",\"8組そろえるか、制限時間90秒。\",\"ペア成立+15点×コンボ。はずれでピンチゲージ+7%。\",\"8組そろえきったら成功（残り時間ボーナス）。\",\"ピンチゲージ100%で即終了。\",90\n";
+window.HP_DATA["バリエーション"] = "id,genre_id,name,desc\nV_A1,G_ACTION,落下キャッチ,\"上から落ちてくる「いいもの」を、お皿/かごで受け止める（牛乳キャッチ型）。\"\nV_A2,G_ACTION,よけろダッシュ,\"子を背負った親が、人混みや障害物を左右によけながらトイレ/ゴールへ走り抜ける。\"\nV_A3,G_ACTION,スワイプ仕分け,\"ベルトコンベアのように流れてくるものを、左右スワイプで仕分ける。\"\nV_P1,G_PUZZLE,仕分け箱,\"1問ずつ出るものを、2つの箱（食べられる/食べられない など）に振り分ける。\"\nV_P2,G_PUZZLE,バランス積み,\"落ちてくるアイテムを、ぐらぐらの台にバランスよく積み上げる。\"\nV_P3,G_PUZZLE,穴うめ,\"ハプニングで開いた「穴」に、落ちてくるピースをタイミングよくはめる。\"\nV_M1,G_MATCH,神経衰弱,\"裏返しのカードからペアを探す定番。\"\nV_M2,G_MATCH,スピード合わせ,\"出題パネルと同じ絵を、選択肢の中からすばやくタップ。\"\nV_M3,G_MATCH,ペア迷路,\"迷路の中でペアになる絵を2枚見つけると、扉が開いて進める。\"\n";
+window.HP_DATA["ツイスト"] = "id,text\nTW01,ときどき強風（おならの風）がふいて、動きが一瞬止まる\nTW02,残り10秒でスピードアップするラストスパート演出\nTW03,ハテナボックス登場：中身が開くまでわからない\nTW04,ミスしても1回だけ「お助け再挑戦」（こぼれた牛乳を最後の1滴まで拾いなおす）\nTW05,親子同時操作：片手は親、もう片手は子ども担当\nTW06,コンボ10でオノマトペが画面を駆け巡る大演出\nTW07,途中から画面がくるっと回る逆さステージ（子ども目線）\nTW08,ラッキーアイテムを取ると一瞬スローモーション\nTW09,アイテムがコミカルにバウンドする物理挙動\nTW10,連続正解でBGMのテンポがだんだん速くなる\n";
+window.HP_DATA["パターン_テイスト"] = "id,name,style_text,palette_text,font_text,bg_text,effect_text,bgm_text,se_text\nT_POP,アメコミPOP風,\"ベンデイドット・ハーフトーン網点を背景・オブジェクトに適用。太い黒フチ(solid 3px〜5px)、強烈なコントラスト、高彩度の配色。レトロコミック・ヴィンテージ印刷風の質感や枠線。\",\"シアン #00C2FF / ビビッドイエロー #FFE500 / クリムゾンレッド #E8112D / ホワイト #FFFFFF / インクブラック #141414\",\"丸ゴシック系の太字(例: 'M PLUS Rounded 1c','Hiragino Maru Gothic ProN','Yu Gothic')。タイトルは少し傾けて配置。\",\"ハーフトーン網点(ドットパターン)の背景 + 紙のような温かい地色\",\"ギザギザのコミック風フキダシ(OOPS!/EMERGENCY!/WHAT!?/CATCH!)が画面に飛び出す演出。ヒット・ピンチ時の画面全体シェイク、スターバースト衝撃線、星・汗・水滴のパーティクル放出。コンボ・重要イベント時に一瞬のヒットストップ(数フレーム)とズーム。\",\"レトロファンク風のベースライン+アルペジオメロディのアップテンポBGM(128bpm相当)を、Web Audio APIのタイマー/シーケンサーで自動演奏。START操作時にAudioContextを安全に初期化・アンミュートして即時再生。タイトル画面とリザルト画面はジングル/BGMを切り替え。画面内にBGMのON/OFFトグルを設置。\",\"成功音=小気味よいピッチ上昇・ファンファーレ / 失敗・衝突音=濁ったノイズ+ピッチ下降 / 警告音=ピンチゲージ80%以上でのリズミカルな警報アラート / アクション音=ボタンクリック、スライド、ダッシュ。\"\nT_PIXEL,16ビットドットスタイル,\"16ビット時代のドット絵グラフィック。チェッカー状のピクセルパターン背景。滑らかなグラデーションを避け、ピクセル感を保つ。レトロ家庭用ゲーム機風のベゼル枠。\",\"レトログリーン #3EE6C1 / ミッドナイトブルー #101828 / サンイエロー #FFD23F / コーラルピンク #FF5D8F / ホワイト #F4F4F4\",\"ピクセル/等幅フォント(例: 'Courier New', monospace)。8bit風タイポ。数字は桁を揃える。\",\"ピクセルパターン背景 + CRT風の走査線(任意)\",\"8bit風の爆発エフェクト(ピクセル粒子・星型スプライト)。画面シェイク、ヒットストップ、コンボ時ズーム。フキダシは角ばった8bit風の枠(OOPS!/EMERGENCY!/WHAT!?)。\",\"チップチューン風BGM(150bpm相当・スクエアウェーブ中心)をWeb Audio APIでシーケンサー自動演奏。START操作時にAudioContextを安全に初期化。タイトル/リザルトでジングル切替。BGM ON/OFFトグルを設置。\",\"成功音=上昇アルペジオ / 失敗音=下降ノイズ / 警告音=警報ビープ / アクション音=ブリップ音。\"\n";
+window.HP_DATA["パターン_イラスト"] = "id,name,style_text,palette_text,texture_text,composition_text,ng_text\nI_GEKIGA,昭和劇画調,\"昭和レトロ劇画調の重い描き込み。ハッチング(斜線)による陰影、太く鋭い輪郭線、白黒に近い地にクリムゾンの差し色。大げさな描き込みで「事件感」を笑いに。\",\"モノクロ基調 + クリムゾンレッド #B3121F / アンバー #E8B500 の差し色\",\"斜線ハッチングの網掛け、古い印刷のざらつき感\",\"中央に親と子の人物を大きく。背景に放射状の集中線。上部にタイトル帯、フキダシにオノマトペ、下部にエピソード帯。\",\"実在人物の似顔絵化はしない(架空の人物として描く)。残虐・不快な表現は避け、あくまで笑いとして描く。\"\nI_POP,アメコミPOP調,\"アメリカンコミックPOPアート調。ハーフトーン網点、太い黒フチ(3px〜5px)、高彩度。カラフルでポップ、親子どちらにも親しみがある。\",\"ビビッドイエロー #FFE500 / シアン #00C2FF / クリムゾンレッド #E8112D / ホワイト #FFFFFF / インクブラック #141414\",\"ハーフトーン網点(ドットパターン)、レトロ印刷風の質感\",\"中央に親と子の人物を大きく、背景に放射状スターバースト。上部にタイトル帯、フキダシにオノマトペ、下部にエピソード帯。\",\"実在人物の似顔絵化はしない(架空の人物として描く)。不快な表現は避ける。\"\nI_PHOTO,実写風,\"実写風の質感(写真風の陰影と奥行き)で「あるある」のリアルさを共感に。柔らかい自然光、浅い被写界深度風のぼかし。人物は擬似写真風(イラスト寄りの実写調)。\",\"アースカラー基調(ベージュ/セピア/グレイイエロー)+自然な差し色\",\"紙のザラつき(グレイン)、ビネット(周辺減光)\",\"日常の生活空間を背景に親子を配置。リアルな距離感で、事件の瞬間をスナップショット風に切り取る。\",\"実在人物の顔写真や似顔絵は使わない(架空人物・後ろ姿・手元中心も可)。不快な表現は避ける。\"\n";
+
+
+/* =========================================================
+   HAP//GEN — パターンDB ローダ
+   読み込み先：公開CSV(csv) / Apps Script(api) / 同梱(local)
+   どのモードでも、最終的に window.HP.* の形へ変換して差し替える。
+   ========================================================= */
+window.HP = window.HP || {};
+(function(){
+'use strict';
+
+const SHEETS = [
+  '設定','マスタ_ハプニング','パターン_ジャンル','バリエーション','ツイスト','パターン_テイスト','パターン_イラスト'
+];
+
+/* ---------------- CSV ---------------- */
+function parseCSV(text){
+  const rows=[]; let row=[], cell='', q=false;
+  text = String(text||'').replace(/^\uFEFF/,'');
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; }
+      else cell+=c;
+    }else{
+      if(c==='"') q=true;
+      else if(c===','){ row.push(cell); cell=''; }
+      else if(c==='\n'){ row.push(cell); rows.push(row); row=[]; cell=''; }
+      else if(c==='\r'){ /* skip */ }
+      else cell+=c;
+    }
+  }
+  if(cell!==''||row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r=>r.some(x=>String(x).trim()!==''));
+}
+function toObjects(rows){
+  if(!rows.length) return [];
+  const head = rows[0].map(h=>String(h).trim());
+  return rows.slice(1).map(r=>{
+    const o={};
+    head.forEach((h,i)=>{ if(h) o[h]= r[i]===undefined?'':String(r[i]).trim(); });
+    return o;
+  });
+}
+const list = v=> String(v||'').split(/[,、\s]+/).map(s=>s.trim()).filter(Boolean);
+
+/* ---------------- 変換（シート → window.HP.*） ---------------- */
+function build(S){
+  const g = n => toObjects(parseCSV(S[n]||''));
+  const out = {};
+
+  const cfg = {};
+  g('設定').forEach(r=>{ cfg[r.key]=r.value; });
+  out.CFG = cfg;
+
+  out.HAPPI = g('マスタ_ハプニング').map(r=>({
+    id:r.id, label:r.label, keywords:r.keywords,
+    kw:list(r.keywords), sample:r.sample_episode, sampleTitle:r.sample_title,
+    scene:r.scene_hook, good:list(r.good_items), bad:list(r.bad_items),
+    player:r.player, playerLabel:r.player_label,
+    gameHook:r.game_hook, ono:list(r.onomatopoe), illustIdea:r.illust_idea
+  }));
+
+  out.GENRES = g('パターン_ジャンル').filter(r=>r.id).map(r=>({
+    id:r.id, name:r.name, goal:r.goal_text,
+    controlsPC:r.controls_pc, controlsSP:r.controls_sp,
+    loop:r.loop_text, score:r.score_text, win:r.win_text, lose:r.lose_text,
+    duration:Number(r.duration_sec)||60
+  }));
+
+  out.VARIANTS = g('バリエーション').filter(r=>r.id);
+
+  out.TWISTS = g('ツイスト').filter(r=>r.id);
+
+  out.TASTES = g('パターン_テイスト').filter(r=>r.id).map(r=>({
+    id:r.id, name:r.name, style:r.style_text, palette:r.palette_text,
+    font:r.font_text, bg:r.bg_text, effect:r.effect_text, bgm:r.bgm_text, se:r.se_text
+  }));
+
+  out.ILLUST = g('パターン_イラスト').filter(r=>r.id).map(r=>({
+    id:r.id, name:r.name, style:r.style_text, palette:r.palette_text,
+    texture:r.texture_text, composition:r.composition_text, ng:r.ng_text
+  }));
+
+  return out;
+}
+
+/* ---------------- 読み込み ---------------- */
+async function loadCSV(){
+  const S={};
+  for(const name of SHEETS){
+    const res = await fetch(window.HP_CONFIG.CSV_BASE + encodeURIComponent(name) + '.csv');
+    if(!res.ok) throw new Error('csv '+name+' '+res.status);
+    S[name] = await res.text();
+  }
+  return S;
+}
+async function loadAPI(){
+  const res = await fetch(window.HP_CONFIG.API_URL + '?t=' + Date.now());
+  if(!res.ok) throw new Error('api '+res.status);
+  const S = await res.json();
+  for(const name of SHEETS){ if(typeof S[name]!=='string') throw new Error('api sheet missing: '+name); }
+  return S;
+}
+function loadLocal(){
+  if(!window.HP_DATA) throw new Error('local data missing');
+  return window.HP_DATA;
+}
+function setChip(state, label){
+  const el = document.getElementById('dbChip');
+  if(!el) return;
+  el.textContent = label;
+  el.className = 'db-chip ' + state;
+  el.title = 'データの読み込み元: ' + label;
+}
+async function init(){
+  const c = window.HP_CONFIG;
+  const order = c.MODE==='api' ? [loadAPI,loadCSV,loadLocal]
+              : c.MODE==='csv' ? [loadCSV,loadAPI,loadLocal]
+              : [loadLocal];
+  for(const loader of order){
+    try{
+      const S = await loader();
+      window.HP = build(S);
+      const label = loader===loadAPI?'API':(loader===loadCSV?'CSV':'LOCAL');
+      setChip(loader===loadAPI?'api':(loader===loadCSV?'csv':'local'), label);
+      if(c.DEBUG) console.log('[HAP//GEN] DB loaded:', label);
+      window.dispatchEvent && window.dispatchEvent(new Event('hp:ready'));
+      return;
+    }catch(e){
+      if(c.DEBUG) console.warn('[HAP//GEN] loader failed:', e.message);
+    }
+  }
+  setChip('local','LOCAL(FALLBACK)');
+  window.dispatchEvent && window.dispatchEvent(new Event('hp:ready'));
+}
+
+window.HP_DB = { parseCSV, toObjects, list, build, init, SHEETS };
+if((window.HP_CONFIG && window.HP_CONFIG.MODE!=='never') && typeof document!=='undefined'){
+  document.addEventListener('DOMContentLoaded', init);
+}
+})();
+
+
+/* =========================================================
+   HAP//GEN — 生成ロジック（AIなし・決定的）
+   パターンDB（window.HP.*）の組み合わせから、
+   「ゲーム生成プロンプト」「イラスト生成プロンプト」を組み立てる。
+   実際の生成はユーザーの生成AIサービスに依存（APIは呼ばない）。
+   ========================================================= */
+window.HP_GEN = (function(){
+'use strict';
+
+/* ---------- シード付き乱数（mulberry32） ---------- */
+function mulberry32(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function pickN(rng, arr, n){
+  const a = (arr||[]).slice(); const out = [];
+  while(out.length < n && a.length){ out.push(a.splice(Math.floor(rng()*a.length),1)[0]); }
+  return out;
+}
+
+function hpById(id){ return (window.HP.HAPPI||[]).find(x=>x.id===id); }
+function genreById(id){ return (window.HP.GENRES||[]).find(x=>x.id===id); }
+function tasteById(id){ return (window.HP.TASTES||[]).find(x=>x.id===id); }
+function illustById(id){ return (window.HP.ILLUST||[]).find(x=>x.id===id); }
+function variantsOf(gid){ return (window.HP.VARIANTS||[]).filter(v=>v.genre_id===gid); }
+
+/* 本文キーワード → ハプニング種別の自動判定 */
+function detectHappening(text){
+  const t = String(text||'');
+  for(const h of (window.HP.HAPPI||[])){
+    if(h.id==='HP00') continue;
+    if(h.kw.some(k=>t.indexOf(k)>=0)) return h.id;
+  }
+  return 'HP00';
+}
+
+/* ---------- 抽選（ジャンル/バリエーション/ツイスト/オノマトペ） ---------- */
+function roll(sel, seed){
+  const rng = mulberry32(seed);
+  const cfg = window.HP.CFG || {};
+  const hp = hpById(sel.pack) || hpById('HP00') || (window.HP.HAPPI||[])[0];
+
+  let genre;
+  if(sel.genre === 'omakase'){
+    const gs = window.HP.GENRES || [];
+    genre = gs[Math.floor(rng()*gs.length)] || gs[0];
+  }else{
+    genre = genreById(sel.genre) || (window.HP.GENRES||[])[0];
+  }
+  const vs = variantsOf(genre.id);
+  const variant = vs.length ? vs[Math.floor(rng()*vs.length)] : null;
+  const twists = pickN(rng, window.HP.TWISTS, 1 + (rng()<0.4 ? 1 : 0));
+  const onoGame = pickN(rng, hp.ono, Math.min(3, (hp.ono||[]).length));
+  return { hp, genre, variant, twists, onoGame, onoIllust: onoGame[0]||'', cfg };
+}
+
+function bl(label, text){ return '- ' + label + '：' + text; }
+
+/* ---------- ゲーム生成プロンプト ---------- */
+function buildGamePrompt(sel, seed){
+  const r = roll(sel, seed);
+  const cfg = r.cfg;
+  const min = cfg.game_min_sec || '30', max = cfg.game_max_sec || '90';
+  const L = [];
+  L.push('# 目的');
+  L.push('「' + (cfg.event_name||'笑える子育てハプニングミュージアム') + '」（' + (cfg.venue||'') + '・12月イベント）に展示・実装可能な、' + min + '秒〜' + max + '秒で遊べる直感的でユーモラスなWebミニゲームを、単一のHTMLファイルとして作成してください。');
+  L.push('ゲームは区民から投稿された子育てハプニングを題材に、コミカルに表現します。子育てを笑いに変える「あるある」の共感がテーマです。');
+  L.push('');
+  L.push('# 投稿ハプニング（テーマ）');
+  L.push(bl('タイトル', sel.title));
+  L.push(bl('エピソード', sel.story));
+  L.push(bl('投稿者', sel.author || '区民投稿'));
+  L.push(bl('ハプニング種別', r.hp.label + '（' + r.hp.id + '）'));
+  L.push(bl('ゲーム化のヒント', r.hp.gameHook));
+  L.push(bl('舞台の描写', r.hp.scene));
+  L.push(bl('フキダシ用オノマトペ候補', r.onoGame.join(' / ')));
+  L.push(bl('ゲーム内アイテム候補（よいもの）', r.hp.good.join(' ')));
+  L.push(bl('障害物候補（悪いもの）', r.hp.bad.join(' ')));
+  L.push('');
+  L.push('# ゲームジャンルとゲームデザイン');
+  L.push(bl('ジャンル', r.genre.name + ' — ' + r.genre.goal));
+  if(r.variant) L.push(bl('実装パターン', r.variant.name + ' — ' + r.variant.desc));
+  if(r.twists.length) L.push(bl('ツイスト（ひとひねり）', r.twists.map(t=>t.text).join(' ／ ')));
+  L.push(bl('操作体系（PC）', r.genre.controlsPC));
+  L.push(bl('操作体系（スマホ）', r.genre.controlsSP));
+  L.push(bl('ゲームサイクル', 'タイトル画面（操作説明含む）→ メインゲーム → リザルト画面（スコア・ランク判定・再挑戦ボタン）。'));
+  L.push(bl('ループ', r.genre.loop));
+  L.push(bl('スコア', r.genre.score));
+  L.push(bl('成功条件', r.genre.win));
+  L.push(bl('失敗条件', r.genre.lose));
+  L.push(bl('プレイ時間', r.genre.duration + '秒（' + min + '〜' + max + '秒の範囲で設計）'));
+  L.push(bl('トーン＆マナー', '子育てを否定・バカにせず、当事者も笑える「共感のある笑い」。不快・危険な表現は避ける。'));
+  L.push('');
+  const t = tasteById(sel.gt) || (window.HP.TASTES||[])[0];
+  L.push('# ビジュアル＆UI要件（テイスト：' + t.name + '）');
+  L.push('1. スタイル：' + t.style);
+  L.push('2. 配色：' + t.palette);
+  L.push('3. フォント：' + t.font);
+  L.push('4. 背景：' + t.bg);
+  L.push('5. 画面ジュース（エフェクト）：' + t.effect);
+  L.push('');
+  L.push('# サウンド要件（Web Audio APIのみで完結、外部アセット不要）');
+  L.push('1. ループBGM（必須実装）：' + t.bgm);
+  L.push('2. 効果音（SE）：' + t.se);
+  L.push('');
+  L.push('# 出力形式');
+  L.push('- 外部画像や外部音声ファイルのリンクに依存せず、アイコンや図形はCanvas APIまたはSVG、CSSで完全描画すること。');
+  L.push('- <!DOCTYPE html> から </html> まで、そのままブラウザで開けば動作する完全なコードとして出力すること。');
+  L.push('- 縦持ちスマートフォン画面を前提とし、PC（キーボード矢印/WASD、マウスドラッグ/クリック）およびスマートフォン（画面内タッチボタン、スワイプ/ドラッグ）の両方で破綻なく操作できるレスポンシブ設計にすること。');
+  return { text: L.join('\n'), roll: r };
+}
+
+/* ---------- イラスト生成プロンプト（展示パネル用1コマ） ---------- */
+function buildIllustPrompt(sel, seed){
+  const r = roll(sel, seed);
+  const cfg = r.cfg;
+  const t = illustById(sel.it) || (window.HP.ILLUST||[])[0];
+  const L = [];
+  L.push('# 目的');
+  L.push('「' + (cfg.event_name||'笑える子育てハプニングミュージアム') + '」（' + (cfg.venue||'') + '）の展示パネル用 1コマイラストを作成してください。テーマは次の子育てハプニングです。');
+  L.push('');
+  L.push('# 投稿ハプニング（テーマ）');
+  L.push(bl('タイトル', sel.title));
+  L.push(bl('エピソード', sel.story));
+  L.push(bl('投稿者', sel.author || '区民投稿'));
+  L.push(bl('ハプニング種別', r.hp.label + '（' + r.hp.id + '）'));
+  L.push(bl('1コマの構図ヒント', r.hp.illustIdea));
+  L.push(bl('舞台の描写', r.hp.scene));
+  L.push(bl('フキダシ用オノマトペ候補', r.onoIllust));
+  L.push('');
+  L.push('# イラストテイスト（' + t.name + '）');
+  L.push('1. スタイル：' + t.style);
+  L.push('2. 配色：' + t.palette);
+  L.push('3. 質感：' + t.texture);
+  L.push('');
+  L.push('# 構図要件');
+  L.push('- 縦長1コマ（比率' + (cfg.illust_ratio||'4:5') + '・目安' + (cfg.illust_size||'1080x1350') + 'px）。パネル印刷（' + (cfg.panel_print||'A4縦') + '想定）に耐える解像度。');
+  L.push('- ' + t.composition);
+  L.push('- 上部にタイトル帯：ハプニングタイトル（' + sel.title + '）を太字で。');
+  L.push('- フキダシ1個にオノマトペ（例：' + r.onoIllust + '）。');
+  L.push('- 下部に帯：エピソード本文（20字以内×7行程度に折り返し）＋「投稿：' + (sel.author||'区民投稿') + '」＋イベント名（' + (cfg.event_name||'') + '）。');
+  L.push('- 文字は最小限（タイトルとオノマトペのみ）。日本語文字が破綻しやすい場合は文字なしで出力し、あとからパネルに文字を重ねる前提でもよい。');
+  L.push('');
+  L.push('# 注意事項');
+  L.push('- ' + t.ng);
+  L.push('- 子育てを否定する表現ではなく、当事者も笑える共感のある描写にする。');
+  L.push('');
+  L.push('# 出力形式');
+  L.push('- 縦長比率' + (cfg.illust_ratio||'4:5') + '。高解像度。背景透過なし。');
+  return { text: L.join('\n'), roll: r };
+}
+
+/* ---------- UI用サマリー ---------- */
+function summary(sel, r){
+  const t = tasteById(sel.gt); const it = illustById(sel.it);
+  return {
+    hp: r.hp.label + '（' + r.hp.id + '）',
+    genre: r.genre.name,
+    variant: r.variant ? (r.variant.name + ' — ' + r.variant.desc) : '—',
+    twists: r.twists.map(x=>x.text),
+    gtheme: t ? t.name : '',
+    itaste: it ? it.name : ''
+  };
+}
+
+return { detectHappening, roll, buildGamePrompt, buildIllustPrompt, summary };
+})();
+
+
+/* =========================================================
+   HAP//GEN — UI結線（フォーム → 生成 → 出力）
+   ========================================================= */
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+let seed = Math.floor(Math.random()*2147483647);
+let packTouched = false;
+
+function val(name){ const el = document.querySelector('input[name="'+name+'"]:checked'); return el ? el.value : ''; }
+function setRadio(name, v){ const el = document.querySelector('input[name="'+name+'"][value="'+v+'"]'); if(el) el.checked = true; }
+function inputs(){ return { t:$('fTitle').value, s:$('fStory').value, a:$('fAuthor').value, p:$('fPack').value, g:val('genre'), gt:val('gtheme'), it:val('itaste') }; }
+function counters(){
+  $('cTitle').textContent = Array.from($('fTitle').value).length;
+  $('cStory').textContent = Array.from($('fStory').value).length;
+  $('cAuthor').textContent = Array.from($('fAuthor').value).length;
+}
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1600);
+}
+function save(){ try{ localStorage.setItem('hapgen', JSON.stringify(inputs())); }catch(e){} }
+
+function fillPacks(){
+  const sel = $('fPack'); sel.innerHTML = '';
+  (window.HP.HAPPI||[]).forEach(h=>{
+    const o = document.createElement('option');
+    o.value = h.id; o.textContent = h.label + '（' + h.id + '）';
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', ()=>{ packTouched = true; save(); });
+}
+function autoDetect(){
+  if(packTouched) return;
+  const id = window.HP_GEN.detectHappening($('fTitle').value + '　' + $('fStory').value);
+  if($('fPack').value !== id) $('fPack').value = id;
+}
+
+/* ---------- セッション（URLハッシュ + localStorage） ---------- */
+function b64u(s){ return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function unb64u(s){ return decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function chipsHTML(sum){
+  const c = [];
+  c.push('<span class="chip k-hp"><b>ハプニング:</b> ' + esc(sum.hp) + '</span>');
+  c.push('<span class="chip k-genre"><b>ジャンル:</b> ' + esc(sum.genre) + '</span>');
+  c.push('<span class="chip k-variant"><b>実装パターン:</b> ' + esc(sum.variant) + '</span>');
+  sum.twists.forEach(t=>c.push('<span class="chip k-twist"><b>ツイスト:</b> ' + esc(t) + '</span>'));
+  c.push('<span class="chip k-taste"><b>ゲーム:</b> ' + esc(sum.gtheme) + ' ／ <b>イラスト:</b> ' + esc(sum.itaste) + '</span>');
+  return c.join('');
+}
+
+function generate(rollNew){
+  if(!window.HP || !window.HP.HAPPI){ toast('DBを読み込み中です。もう一度おしてください'); return; }
+  const i = inputs();
+  if(!i.t.trim() || !i.s.trim()){ toast('タイトルとエピソードは必須です'); return; }
+  if(rollNew) seed = Math.floor(Math.random()*2147483647);
+  const gp = window.HP_GEN.buildGamePrompt(i, seed);
+  const ip = window.HP_GEN.buildIllustPrompt(i, seed);
+  $('outGame').value = gp.text;
+  $('outIllust').value = ip.text;
+  $('sumChips').innerHTML = chipsHTML(window.HP_GEN.summary(i, gp.roll));
+  $('formCard').hidden = true;
+  $('outCard').hidden = false;
+  const payload = b64u(JSON.stringify(Object.assign({}, i, { seed: seed })));
+  try{ history.replaceState(null, '', '#g=' + payload); }catch(e){ location.hash = 'g=' + payload; }
+  $('sessionCode').textContent = payload.slice(0, 8);
+  save();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function applyState(o){
+  $('fTitle').value = o.t || ''; $('fStory').value = o.s || ''; $('fAuthor').value = o.a || '';
+  if(o.p){ $('fPack').value = o.p; packTouched = true; }
+  if(o.g) setRadio('genre', o.g);
+  if(o.gt) setRadio('gtheme', o.gt);
+  if(o.it) setRadio('itaste', o.it);
+  counters();
+}
+function restore(){
+  const h = location.hash.replace(/^#/, '');
+  if(h.indexOf('g=') === 0){
+    try{
+      const o = JSON.parse(unb64u(h.slice(2)));
+      if(o.seed) seed = o.seed;
+      applyState(o);
+      generate(false);
+      return true;
+    }catch(e){}
+  }
+  try{
+    const raw = localStorage.getItem('hapgen');
+    if(raw){ applyState(JSON.parse(raw)); }
+  }catch(e){}
+  return false;
+}
+
+/* ---------- 出力（コピー / ダウンロード / 印刷） ---------- */
+function dl(name, text){
+  const blob = new Blob([text], {type:'text/markdown;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+function safeName(s){ return (s||'').replace(/[\\/:*?"<>|\s]+/g,'_').slice(0,24) || 'hapning'; }
+async function copyTA(ta){
+  try{ await navigator.clipboard.writeText(ta.value); toast('コピーしました'); }
+  catch(e){ ta.select(); document.execCommand('copy'); toast('コピーしました'); }
+}
+function copyText(t){
+  const ta = document.createElement('textarea'); ta.value = t;
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('セッションリンクをコピーしました'); }
+  catch(e){ toast('コピーできませんでした'); }
+  ta.remove();
+}
+
+/* ---------- 結線 ---------- */
+function wire(){
+  ['fTitle','fStory','fAuthor'].forEach(id=>{
+    $(id).addEventListener('input', ()=>{ counters(); autoDetect(); save(); });
+  });
+  ['genre','gtheme','itaste'].forEach(n=>{
+    document.querySelectorAll('input[name="'+n+'"]').forEach(el=>el.addEventListener('change', save));
+  });
+  $('btnGen').addEventListener('click', ()=>generate(true));
+  $('btnReroll').addEventListener('click', ()=>generate(true));
+  $('btnBack').addEventListener('click', ()=>{ $('outCard').hidden = true; $('formCard').hidden = false; window.scrollTo({top:0}); });
+  $('btnSample').addEventListener('click', ()=>{
+    const hs = (window.HP && window.HP.HAPPI) || [];
+    if(!hs.length){ toast('DB読み込み中です'); return; }
+    const h = hs[Math.floor(Math.random()*hs.length)];
+    $('fTitle').value = h.sampleTitle || ('サンプル：' + h.label);
+    $('fStory').value = h.sample || '';
+    $('fPack').value = h.id; packTouched = true;
+    counters(); save(); toast('サンプルを入れました');
+  });
+  $('btnRestart').addEventListener('click', ()=>{
+    if(!confirm('入力を全部消して最初からやり直しますか？')) return;
+    try{ localStorage.removeItem('hapgen'); }catch(e){}
+    history.replaceState(null, '', location.pathname);
+    ['fTitle','fStory','fAuthor'].forEach(id=>$(id).value='');
+    packTouched = false; seed = Math.floor(Math.random()*2147483647);
+    $('outCard').hidden = true; $('formCard').hidden = false;
+    counters(); window.scrollTo({top:0});
+  });
+  $('btnPrint').addEventListener('click', ()=>window.print());
+  $('tabGame').addEventListener('click', ()=>{
+    $('tabGame').classList.add('on'); $('tabIllust').classList.remove('on');
+    $('paneGame').hidden = false; $('paneIllust').hidden = true;
+  });
+  $('tabIllust').addEventListener('click', ()=>{
+    $('tabIllust').classList.add('on'); $('tabGame').classList.remove('on');
+    $('paneIllust').hidden = false; $('paneGame').hidden = true;
+  });
+  $('btnCopyGame').addEventListener('click', ()=>copyTA($('outGame')));
+  $('btnCopyIllust').addEventListener('click', ()=>copyTA($('outIllust')));
+  $('btnDlGame').addEventListener('click', ()=>dl('ゲーム生成プロンプト_' + safeName(inputs().t) + '.md', $('outGame').value));
+  $('btnDlIllust').addEventListener('click', ()=>dl('イラスト生成プロンプト_' + safeName(inputs().t) + '.md', $('outIllust').value));
+  $('btnDlBoth').addEventListener('click', ()=>{
+    const i = inputs();
+    const both = '# 生成プロンプト（まとめ）\n\n## 1. ゲーム生成プロンプト\n\n' + $('outGame').value + '\n\n---\n\n## 2. イラスト生成プロンプト\n\n' + $('outIllust').value + '\n';
+    dl('プロンプトまとめ_' + safeName(i.t) + '.md', both);
+  });
+  $('sessionChip').addEventListener('click', ()=>copyText(location.href));
+}
+
+function boot(){
+  if(window.HP && window.HP.HAPPI){ start(); }
+  else{ window.addEventListener('hp:ready', start); }
+  function start(){
+    fillPacks();
+    const c = window.HP.CFG || {};
+    if(c.event_name && c.organizer){
+      $('footCredit').textContent = c.event_name + '（仮）｜' + c.organizer;
+    }
+    wire(); counters(); restore();
+  }
+}
+boot();
+})();
+
+</script>
+</body>
+</html>
