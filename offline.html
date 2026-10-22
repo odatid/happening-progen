@@ -1022,7 +1022,10 @@ function wire(){
     $('fTitle').value = h.sampleTitle || ('サンプル：' + h.label);
     $('fStory').value = h.sample || '';
     $('fPack').value = h.id; packTouched = true;
-    counters(); save(); toast('サンプルを入れました');
+    counters(); save();
+    /* サンプル入力を入力された情報として採用し、そのままプロンプト生成まで進む */
+    generate(false);
+    toast('サンプルを入力情報として採用して生成しました');
   });
   $('btnRestart').addEventListener('click', ()=>{
     if(!confirm('入力を全部消して最初からやり直しますか？')) return;
