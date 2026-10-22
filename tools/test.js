@@ -109,6 +109,9 @@ assert(gp.text.indexOf('【必須】子どもの無邪気な顔をゲーム画�
 assert(gp.text.indexOf('きょとん') >= 0 && gp.text.indexOf('ドヤ顔') >= 0, 'expression mapping missing (game)');
 assert(ip.text.indexOf('【必須】子どもの無邪気な顔を1コマの中心') >= 0, 'child innocent face requirement missing (illust)');
 assert(gp.text.indexOf('親だけが必死') >= 0, 'contrast rule missing (game)');
+// 単独プレイ必須（交互・同時プレイ禁止）
+assert(gp.text.indexOf('【必須】プレイヤーは1人') >= 0, 'single-player requirement missing');
+assert(gp.text.indexOf('交互プレイ・協力プレイ・2人同時操作') >= 0, 'no-alternating-play rule missing');
 const rg2 = gen.buildGamePrompt(reflectSel, 3);
 const cg = gen.buildIllustPrompt(reflectSel, 3);
 assert(rg2.text.indexOf('笑い設計') >= 0 && cg.text.indexOf('無邪気') >= 0, 'comedy sections missing for other input');
