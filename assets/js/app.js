@@ -141,9 +141,9 @@ function wire(){
     $('fStory').value = h.sample || '';
     $('fPack').value = h.id; packTouched = true;
     counters(); save();
-    /* サンプル入力を入力された情報として採用し、そのままプロンプト生成まで進む */
-    generate(false);
-    toast('サンプルを入力情報として採用して生成しました');
+    /* サンプルをフォームに入れるだけ。生成はユーザーが確認してから「生成する」で行う */
+    toast('サンプルを入れました。内容を確認して「生成する」をおしてください');
+    window.scrollTo({top:0, behavior:'smooth'});
   });
   $('btnRestart').addEventListener('click', ()=>{
     if(!confirm('入力を全部消して最初からやり直しますか？')) return;
