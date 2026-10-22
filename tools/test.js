@@ -180,6 +180,14 @@ const rg2 = gen.buildGamePrompt(reflectSel, 3);
 const cg = gen.buildIllustPrompt(reflectSel, 3);
 assert(rg2.text.indexOf('笑い設計') >= 0 && cg.text.indexOf('無邪気') >= 0, 'comedy sections missing for other input');
 
+// 13) プレイ時間の短縮（30〜60秒）
+const cfgAll = window.HP.CFG || {};
+assert(String(cfgAll.game_max_sec) === '60', 'game_max_sec should be 60, got ' + cfgAll.game_max_sec);
+assert(gp.text.indexOf('45秒（30〜60秒') >= 0 || gp.text.indexOf('60秒（30〜60秒') >= 0, 'short play time not reflected: ' + (gp.text.match(/プレイ時間：[^\n]*/)||[''])[0]);
+assert(gp.text.indexOf('30秒〜1分でサクッとクリア') >= 0, 'tempo requirement missing');
+window.HP.GENRES.forEach(g=>{ assert(g.duration <= 60, 'genre duration too long: ' + g.id + ' ' + g.duration); });
+assert(gp.text.indexOf('90秒') < 0, 'old 90s duration still in prompt');
+
 // 6) サンプル列の確認
 window.HP.HAPPI.forEach(h=>{ assert(!!h.sample && !!h.sampleTitle, 'sample missing: ' + h.id); });
 
