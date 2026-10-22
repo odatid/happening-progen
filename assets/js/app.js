@@ -6,6 +6,7 @@
 const $ = id => document.getElementById(id);
 let seed = Math.floor(Math.random()*2147483647);
 let packTouched = false;
+let lastSel = null, lastGameRoll = null;
 
 function val(name){ const el = document.querySelector('input[name="'+name+'"]:checked'); return el ? el.value : ''; }
 function setRadio(name, v){ const el = document.querySelector('input[name="'+name+'"][value="'+v+'"]'); if(el) el.checked = true; }
@@ -63,13 +64,15 @@ function generate(rollNew){
   const i = inputs();
   if(!i.t.trim() || !i.s.trim()){ toast('タイトルとエピソードは必須です'); return; }
   /* UIフォーム(t/s/a/p/g) → 生成関数(title/story/author/pack/genre) のキーを正しく対応させる */
-  const sel = { title: i.t, story: i.s, author: i.a, pack: i.p, genre: i.g, gtheme: i.gt, it: i.it };
+  const sel = { title: i.t, story: i.s, author: i.a, pack: i.p, genre: i.g, gt: i.gt, it: i.it };
   if(rollNew) seed = Math.floor(Math.random()*2147483647);
   const gp = window.HP_GEN.buildGamePrompt(sel, seed);
   const ip = window.HP_GEN.buildIllustPrompt(sel, seed);
   $('outGame').value = gp.text;
   $('outIllust').value = ip.text;
   $('sumChips').innerHTML = chipsHTML(window.HP_GEN.summary(sel, gp.roll));
+  lastSel = sel; lastGameRoll = gp.roll;
+  syncIllustTasteRow(sel.it);
   $('formCard').hidden = true;
   $('outCard').hidden = false;
   const payload = b64u(JSON.stringify(Object.assign({}, i, { seed: seed })));
@@ -103,6 +106,22 @@ function restore(){
     if(raw){ applyState(JSON.parse(raw)); }
   }catch(e){}
   return false;
+}
+
+/* 結果画面からのイラストテイスト切り替え（生成プロンプト段階でテイスト変更・バリエーション試行） */
+function syncIllustTasteRow(t){
+  document.querySelectorAll('#illustTasteRow .taste-swap').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
+}
+function setIllustTaste(t){
+  if(!lastSel){ toast('まず生成してください'); return; }
+  setRadio('itaste', t);
+  lastSel.it = t;
+  const ip = window.HP_GEN.buildIllustPrompt(lastSel, seed);
+  $('outIllust').value = ip.text;
+  $('sumChips').innerHTML = chipsHTML(window.HP_GEN.summary(lastSel, lastGameRoll));
+  syncIllustTasteRow(t); save();
+  const nm = (window.HP.ILLUST.find(x=>x.id==='I_'+t) || {}).name || t;
+  toast('イラストテイストを「' + nm + '」に変えて生成し直しました');
 }
 
 /* ---------- 出力（コピー / ダウンロード / 印刷） ---------- */
@@ -177,6 +196,9 @@ function wire(){
     dl('プロンプトまとめ_' + safeName(i.t) + '.md', both);
   });
   $('sessionChip').addEventListener('click', ()=>copyText(location.href));
+  document.querySelectorAll('#illustTasteRow .taste-swap').forEach(b=>{
+    b.addEventListener('click', ()=>setIllustTaste(b.dataset.t));
+  });
 }
 
 function boot(){

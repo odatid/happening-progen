@@ -24,7 +24,7 @@ for(const g of genres) for(const gt of gthemes) for(const it of itastes){
 }
 
 // 2) 必須セクション
-const sel = { title:'牛乳を全部こぼされた朝', story:'洗濯から戻ったら、リビングで牛乳パックを握りつぶしていた。', author:'3歳児パパ', pack:'HP01', genre:'action', gtheme:'pop', it:'pop' };
+const sel = { title:'牛乳を全部こぼされた朝', story:'洗濯から戻ったら、リビングで牛乳パックを握りつぶしていた。', author:'3歳児パパ', pack:'HP01', genre:'action', gt: 'pop', it:'pop' };
 const gp = gen.buildGamePrompt(sel, 1);
 const ip2 = gen.buildIllustPrompt(sel, 1);
 assert(gp.text.indexOf('今回の種になるハプニングエピソードはこちら。') === 0, 'game prompt must open with episode-first declaration');
@@ -46,7 +46,7 @@ const ip = gen.buildIllustPrompt(sel, 1);
 });
 
 // 4) シードでバリエーションが変わる（おまかせ時）
-const om = { title:'テスト', story:'エピソード。', author:'', pack:'HP00', genre:'omakase', gtheme:'pop', it:'pop' };
+const om = { title:'テスト', story:'エピソード。', author:'', pack:'HP00', genre:'omakase', gt: 'pop', it:'pop' };
 const texts = new Set();
 for(let s=1; s<=12; s++){ texts.add(gen.buildGamePrompt(om, s).text); }
 assert(texts.size > 1, 'omakase variants do not change with seed');
@@ -54,7 +54,7 @@ assert(texts.size > 1, 'omakase variants do not change with seed');
 assert(gen.buildGamePrompt(sel, 7).text === gen.buildGamePrompt(sel, 7).text, 'same seed must produce same prompt');
 
 // 5) 本文がプロンプトに反映されるか（最重要）
-const reflectSel = { title:'えんぴつ風船', story:'スーパーのレジで待っている間に、妹がカーテンをぶち破って全裸で脱走を始めた。パパが撮影に夢中になり、家の犬が追いかけた。', author:'', pack:'HP00', genre:'puzzle', gtheme:'pixel', it:'gekiga' };
+const reflectSel = { title:'えんぴつ風船', story:'スーパーのレジで待っている間に、妹がカーテンをぶち破って全裸で脱走を始めた。パパが撮影に夢中になり、家の犬が追いかけた。', author:'', pack:'HP00', genre:'puzzle', gt: 'pixel', it:'gekiga' };
 const rg = gen.buildGamePrompt(reflectSel, 3);
 const ri = gen.buildIllustPrompt(reflectSel, 3);
 ['スーパー','妹','カーテン','全裸','パパ','犬','撮影','脱走'].forEach(k=>{
@@ -65,12 +65,12 @@ assert(rg.text.indexOf('物語の反映') >= 0, 'story reflection section missin
 assert(ri.text.indexOf('物語の反映') >= 0, 'story reflection section missing (illust)');
 assert(rg.text.indexOf('見どころ（エピソード引用）') >= 0, 'highlight quote missing (game)');
 // 時間帯の反映
-const morningSel = { title:'朝の大惨事', story:'朝の出勤前に、リビングで牛乳を全部こぼされた。', author:'', pack:'HP01', genre:'action', gtheme:'pop', it:'pop' };
+const morningSel = { title:'朝の大惨事', story:'朝の出勤前に、リビングで牛乳を全部こぼされた。', author:'', pack:'HP01', genre:'action', gt: 'pop', it:'pop' };
 const rm = gen.buildGamePrompt(morningSel, 5);
 assert(rm.text.indexOf('朝') >= 0, 'time-of-day not reflected');
 assert(rm.text.indexOf('リビング') >= 0, 'place not reflected');
 // 場所がないエピソードはDB既定＋フォールバック文言
-const noneSel = { title:'あるある', story:'とにかく大変だった。', author:'', pack:'HP00', genre:'match', gtheme:'pop', it:'pop' };
+const noneSel = { title:'あるある', story:'とにかく大変だった。', author:'', pack:'HP00', genre:'match', gt: 'pop', it:'pop' };
 const rn = gen.buildIllustPrompt(noneSel, 5);
 assert(rn.text.indexOf('エピソード本文から読み取') >= 0, 'story-first fallback missing when no place in story');
 assert(rn.text.indexOf('玩具の海') < 0, 'DB sample scene leaked into illust prompt for thin story');
@@ -78,7 +78,7 @@ const gn = gen.buildGamePrompt(noneSel, 5);
 assert(gn.text.indexOf('玩具の海') < 0, 'DB sample scene leaked into game prompt for thin story');
 
 // 7) お迎えバス×ママチャリの例（種別判定と題材の一本化）
-const busSel = { title:'幼稚園のお迎えバス', story:'幼稚園のお迎えバスをママチャリで追いかけた。信号ごとに差が開き、曲がり角でようやく追いついた。', author:'', pack:gen.detectHappening('幼稚園のお迎えバスをママチャリで追いかける'), genre:'action', gtheme:'pop', it:'pop' };
+const busSel = { title:'幼稚園のお迎えバス', story:'幼稚園のお迎えバスをママチャリで追いかけた。信号ごとに差が開き、曲がり角でようやく追いついた。', author:'', pack:gen.detectHappening('幼稚園のお迎えバスをママチャリで追いかける'), genre:'action', gt: 'pop', it:'pop' };
 assert(busSel.pack === 'HP08', 'bus episode detected as ' + busSel.pack);
 const bg = gen.buildGamePrompt(busSel, 9);
 const bi = gen.buildIllustPrompt(busSel, 9);
@@ -125,7 +125,7 @@ assert(gp.text.indexOf('undefined') < 0, 'undefined in bus prompt');
 assert(gp.text.indexOf('# ゲーム基盤（アーケード型・必須）') >= 0, 'arcade base section missing');
 assert(gp.roll.arcade && gp.roll.arcade.name, 'no arcade base picked');
 assert(gp.text.indexOf('基盤型「') >= 0, 'arcade base line missing');
-const arcSel = { title:'テスト', story:'テスト。', author:'', pack:'HP05', genre:'omakase', gtheme:'pop', it:'pop' };
+const arcSel = { title:'テスト', story:'テスト。', author:'', pack:'HP05', genre:'omakase', gt: 'pop', it:'pop' };
 const cg3 = gen.buildGamePrompt(arcSel, 21);
 assert(cg3.text.indexOf('# ゲーム基盤（アーケード型・必須）') >= 0, 'arcade base missing for crayon');
 assert(cg3.roll.arcade, 'no arcade for crayon');
@@ -135,22 +135,22 @@ assert(gp.text.indexOf('# 操作キャラクター（最重要・かわいいキ
 assert(gp.text.indexOf('【必須】プレイヤーが操作する対象は、上のかわいいキャラクター') >= 0, 'cute-char requirement missing');
 assert(gp.text.indexOf('記号（●▲■）') >= 0, 'no-symbol rule missing');
 assert(gp.roll.ch && gp.roll.ch.name, 'no char picked');
-const mamaSel = { title:'朝の大バタバタ', story:'ママが朝の支度で走り回っていたら、子どもが牛乳をこぼした。', author:'', pack:'HP01', genre:'omakase', gtheme:'pop', it:'pop' };
+const mamaSel = { title:'朝の大バタバタ', story:'ママが朝の支度で走り回っていたら、子どもが牛乳をこぼした。', author:'', pack:'HP01', genre:'omakase', gt: 'pop', it:'pop' };
 const mp = gen.buildGamePrompt(mamaSel, 33);
 assert(mp.roll.ch.id === 'CC01', 'mama story should prefer CC01 mama char, got ' + mp.roll.ch.id);
-const bikeSel = { title:'幼稚園のお迎えバス', story:'ママチャリで園バスを追いかけた。', author:'', pack:'HP08', genre:'omakase', gtheme:'pop', it:'pop' };
+const bikeSel = { title:'幼稚園のお迎えバス', story:'ママチャリで園バスを追いかけた。', author:'', pack:'HP08', genre:'omakase', gt: 'pop', it:'pop' };
 const bp2 = gen.buildGamePrompt(bikeSel, 33);
 assert(['CC01','CC06'].indexOf(bp2.roll.ch.id) >= 0, 'bike story should prefer mama or mamachari, got ' + bp2.roll.ch.id);
 assert(bp2.text.indexOf('ママチャリ') >= 0, 'mamachari keyword missing from bike prompt');
 // 追加キャラ（じいじばあば/三輪車/ハムスター）の本文連動
-const giiSel = { title:'じいじの大活躍', story:'じいじとばあばがお迎えに来てくれた。', author:'', pack:'HP00', genre:'omakase', gtheme:'pop', it:'pop' };
+const giiSel = { title:'じいじの大活躍', story:'じいじとばあばがお迎えに来てくれた。', author:'', pack:'HP00', genre:'omakase', gt: 'pop', it:'pop' };
 const gp4 = gen.buildGamePrompt(giiSel, 33);
 assert(gp4.roll.ch.id === 'CC09', 'grandparents story should prefer CC09, got ' + gp4.roll.ch.id);
 assert(gp4.text.indexOf('じいじ') >= 0 && gp4.text.indexOf('ばあば') >= 0, 'grandparent keywords missing');
-const triSel = { title:'三輪車の初出走', story:'三輪車で初めての公園デビュー。', author:'', pack:'HP00', genre:'omakase', gtheme:'pop', it:'pop' };
+const triSel = { title:'三輪車の初出走', story:'三輪車で初めての公園デビュー。', author:'', pack:'HP00', genre:'omakase', gt: 'pop', it:'pop' };
 const tp2 = gen.buildGamePrompt(triSel, 33);
 assert(tp2.roll.ch.id === 'CC10', 'tricycle story should prefer CC10, got ' + tp2.roll.ch.id);
-const hamSel = { title:'ハムスター脱走事件', story:'ハムスターがケージから脱走して、部屋のすきまに入ってしまった。', author:'', pack:'HP00', genre:'omakase', gtheme:'pop', it:'pop' };
+const hamSel = { title:'ハムスター脱走事件', story:'ハムスターがケージから脱走して、部屋のすきまに入ってしまった。', author:'', pack:'HP00', genre:'omakase', gt: 'pop', it:'pop' };
 const hp2b = gen.buildGamePrompt(hamSel, 33);
 assert(hp2b.roll.ch.id === 'CC11', 'hamster story should prefer CC11, got ' + hp2b.roll.ch.id);
 assert(window.HP.CHARS.length === 11, 'char DB should have 11 entries, got ' + window.HP.CHARS.length);
@@ -161,7 +161,7 @@ window.HP.HAPPI.forEach(h=>{
   const n = allTpl.filter(t=>t.hpId===h.id).length;
   assert(n >= 3, 'not enough templates for ' + h.id + ': ' + n);
 });
-const crayonSel = { title:'壁に家族の似顔絵美術館', story:'トイレに行って戻ると、白い壁にクレヨンで家族全員の似顔絵が完成していた。犬には首輪まで描かれていた。', author:'', pack:gen.detectHappening('白い壁にクレヨンで似顔絵を描かれた'), genre:'omakase', gtheme:'pop', it:'pop' };
+const crayonSel = { title:'壁に家族の似顔絵美術館', story:'トイレに行って戻ると、白い壁にクレヨンで家族全員の似顔絵が完成していた。犬には首輪まで描かれていた。', author:'', pack:gen.detectHappening('白い壁にクレヨンで似顔絵を描かれた'), genre:'omakase', gt: 'pop', it:'pop' };
 assert(crayonSel.pack === 'HP05', 'crayon detected as ' + crayonSel.pack);
 const cg2 = gen.buildGamePrompt(crayonSel, 21);
 assert(cg2.text.indexOf('# ゲームコア設計') >= 0, 'core template section missing');
@@ -171,7 +171,7 @@ assert(cg2.text.indexOf('おもちゃの砦') < 0, 'HP17 toy-fort leaked into cr
 ['壁','クレヨン','似顔絵'].forEach(k=>{ assert(cg2.text.indexOf(k) >= 0, 'crayon prompt missing story keyword: ' + k); });
 // 全種別でテンプレが主軸になり、汎用バリアントが消えること
 ['HP01','HP05','HP08','HP12','HP19'].forEach(hp=>{
-  const s2 = { title:'テスト', story:'テスト。', author:'', pack:hp, genre:'omakase', gtheme:'pop', it:'pop' };
+  const s2 = { title:'テスト', story:'テスト。', author:'', pack:hp, genre:'omakase', gt: 'pop', it:'pop' };
   const p2 = gen.buildGamePrompt(s2, 5);
   assert(p2.text.indexOf('# ゲームコア設計') >= 0, 'core section missing for ' + hp);
   assert(p2.text.indexOf('仕分け箱') < 0, 'generic variant leaked for ' + hp);
@@ -187,6 +187,22 @@ assert(gp.text.indexOf('45秒（30〜60秒') >= 0 || gp.text.indexOf('60秒（30
 assert(gp.text.indexOf('30秒〜1分でサクッとクリア') >= 0, 'tempo requirement missing');
 window.HP.GENRES.forEach(g=>{ assert(g.duration <= 60, 'genre duration too long: ' + g.id + ' ' + g.duration); });
 assert(gp.text.indexOf('90秒') < 0, 'old 90s duration still in prompt');
+
+// 14) テイスト指定が正しく反映される（ID不一致バグの回帰テスト）
+const baseSel = { title:'テスト', story:'テスト用のエピソードです。', author:'', pack:'HP01', genre:'action', gt: 'pop', it:'pop' };
+const gpPop = gen.buildGamePrompt(baseSel, 5);
+const gpPix = gen.buildGamePrompt(Object.assign({}, baseSel, {gt: 'pixel'}), 5);
+assert(gpPop.text.indexOf('アメコミPOP風') >= 0, 'game taste pop not applied');
+assert(gpPix.text.indexOf('16ビットドット') >= 0, 'game taste pixel not applied');
+assert(gpPop.text !== gpPix.text, 'game tastes produce identical prompt');
+const ilG = gen.buildIllustPrompt(Object.assign({}, baseSel, {it:'gekiga'}), 5);
+const ilP = gen.buildIllustPrompt(Object.assign({}, baseSel, {it:'pop'}), 5);
+const ilPh = gen.buildIllustPrompt(Object.assign({}, baseSel, {it:'photo'}), 5);
+assert(ilG.text.indexOf('昭和劇画調') >= 0, 'illust taste gekiga not applied');
+assert(ilP.text.indexOf('アメコミPOP調') >= 0, 'illust taste pop not applied');
+assert(ilPh.text.indexOf('実写風') >= 0, 'illust taste photo not applied');
+assert(ilG.text !== ilP.text && ilP.text !== ilPh.text && ilG.text !== ilPh.text, 'illust tastes produce identical prompts');
+assert(ilP.text.indexOf('指定と異なるスタイル') >= 0, 'taste adherence rule missing (illust)');
 
 // 6) サンプル列の確認
 window.HP.HAPPI.forEach(h=>{ assert(!!h.sample && !!h.sampleTitle, 'sample missing: ' + h.id); });

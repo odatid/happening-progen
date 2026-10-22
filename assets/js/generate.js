@@ -40,8 +40,18 @@ function templatesFor(hpId){
 
 function hpById(id){ return (window.HP.HAPPI||[]).find(x=>x.id===id); }
 function genreById(id){ return (window.HP.GENRES||[]).find(x=>x.id===id); }
-function tasteById(id){ return (window.HP.TASTES||[]).find(x=>x.id===id); }
-function illustById(id){ return (window.HP.ILLUST||[]).find(x=>x.id===id); }
+function tasteById(id){
+  const v = String(id||'').toLowerCase();
+  const all = window.HP.TASTES||[];
+  /* ラジオ値(pop/pixel)とDB ID(T_POP/T_PIXEL)の両方に対応 */
+  return all.find(x=>x.id===id) || all.find(x=>x.id.toLowerCase().endsWith('_'+v)) || all[0];
+}
+function illustById(id){
+  const v = String(id||'').toLowerCase();
+  const all = window.HP.ILLUST||[];
+  /* ラジオ値(pop/gekiga/photo)とDB ID(I_POP/I_GEKIGA/I_PHOTO)の両方に対応 */
+  return all.find(x=>x.id===id) || all.find(x=>x.id.toLowerCase().endsWith('_'+v)) || all[0];
+}
 function variantsOf(gid){ return (window.HP.VARIANTS||[]).filter(v=>v.genre_id===gid); }
 
 /* ---------- 本文解析：エピソードから舞台・人物・小物・出来事を抽出 ---------- */
@@ -384,6 +394,7 @@ function buildGamePrompt(sel, seed){
   L.push('3. フォント：' + t.font);
   L.push('4. 背景：' + t.bg);
   L.push('5. 画面ジュース（エフェクト）：' + t.effect);
+  L.push('6. 【最重要】上のテイスト指定を絶対に守ること。指定と異なるスタイルにしないこと。');
   L.push('');
   L.push('# サウンド要件（Web Audio APIのみで完結、外部アセット不要）');
   L.push('1. ループBGM（必須実装）：' + t.bgm);
@@ -435,6 +446,7 @@ function buildIllustPrompt(sel, seed){
   L.push('1. スタイル：' + t.style);
   L.push('2. 配色：' + t.palette);
   L.push('3. 質感：' + t.texture);
+  L.push('4. 【最重要】上のスタイル指定を最優先で守ること。配色・質感・構図・描き味はすべてこのテイストで統一し、指定と異なるスタイル（例：実写指定なのに劇画調、劇画指定なのにポップ調）にしないこと。');
   L.push('');
   L.push('# 構図要件');
   L.push('- 縦長1コマ（比率' + (cfg.illust_ratio||'4:5') + '・目安' + (cfg.illust_size||'1080x1350') + 'px）。パネル印刷（' + (cfg.panel_print||'A4縦') + '想定）に耐える解像度。');

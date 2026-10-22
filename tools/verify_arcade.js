@@ -16,7 +16,7 @@ const assert = (c, m) => { if(!c){ console.error('FAIL:', m); fails++; } };
 const EP = {
   title: '幼稚園のお迎えバス',
   story: '幼稚園のお迎えバスをママチャリで追いかけた。信号ごとに差が開いていく。曲がり角でようやく追いついたら、子どもは平然と「もう来ないかと思った」と言った。',
-  author: '3歳児ママ', pack: 'HP08', genre: 'omakase', gtheme: 'pop', it: 'pop'
+  author: '3歳児ママ', pack: 'HP08', genre: 'omakase', gt: 'pop', it: 'pop'
 };
 /* エピソード固有語（プロンプトに必ず入るはず） */
 const EP_KEYS = ['幼稚園','ママチャリ','信号','曲がり角','お迎えバス','もう来ないかと思った'];

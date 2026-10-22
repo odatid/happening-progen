@@ -131,6 +131,14 @@ textarea{min-height:110px;resize:vertical;}
   font-family:var(--mono);font-size:12.5px;line-height:1.6;
   min-height:380px;white-space:pre-wrap;
 }
+.taste-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;}
+.taste-label{font-weight:800;font-size:13px;}
+.taste-swap{
+  border:3px solid var(--ink);border-radius:10px;background:#fff;font-weight:700;
+  font-size:13px;padding:7px 14px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);font-family:var(--round);
+}
+.taste-swap.on{background:var(--yellow);}
+.taste-swap:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink);}
 .btnrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
 .btnrow .main,.btnrow .sub{
   border:3px solid var(--ink);border-radius:10px;padding:10px 16px;font-weight:800;
@@ -277,6 +285,12 @@ textarea{min-height:110px;resize:vertical;}
     </div>
 
     <div class="pane" id="paneIllust" hidden>
+      <div class="taste-row" id="illustTasteRow">
+        <span class="taste-label">イラストテイスト：</span>
+        <button class="taste-swap" data-t="gekiga" type="button">劇画調</button>
+        <button class="taste-swap on" data-t="pop" type="button">アメコミPOP調</button>
+        <button class="taste-swap" data-t="photo" type="button">実写風</button>
+      </div>
       <textarea id="outIllust" readonly spellcheck="false"></textarea>
       <div class="btnrow">
         <button class="main" id="btnCopyIllust" type="button">コピー</button>
@@ -543,8 +557,18 @@ function templatesFor(hpId){
 
 function hpById(id){ return (window.HP.HAPPI||[]).find(x=>x.id===id); }
 function genreById(id){ return (window.HP.GENRES||[]).find(x=>x.id===id); }
-function tasteById(id){ return (window.HP.TASTES||[]).find(x=>x.id===id); }
-function illustById(id){ return (window.HP.ILLUST||[]).find(x=>x.id===id); }
+function tasteById(id){
+  const v = String(id||'').toLowerCase();
+  const all = window.HP.TASTES||[];
+  /* ラジオ値(pop/pixel)とDB ID(T_POP/T_PIXEL)の両方に対応 */
+  return all.find(x=>x.id===id) || all.find(x=>x.id.toLowerCase().endsWith('_'+v)) || all[0];
+}
+function illustById(id){
+  const v = String(id||'').toLowerCase();
+  const all = window.HP.ILLUST||[];
+  /* ラジオ値(pop/gekiga/photo)とDB ID(I_POP/I_GEKIGA/I_PHOTO)の両方に対応 */
+  return all.find(x=>x.id===id) || all.find(x=>x.id.toLowerCase().endsWith('_'+v)) || all[0];
+}
 function variantsOf(gid){ return (window.HP.VARIANTS||[]).filter(v=>v.genre_id===gid); }
 
 /* ---------- 本文解析：エピソードから舞台・人物・小物・出来事を抽出 ---------- */
@@ -887,6 +911,7 @@ function buildGamePrompt(sel, seed){
   L.push('3. フォント：' + t.font);
   L.push('4. 背景：' + t.bg);
   L.push('5. 画面ジュース（エフェクト）：' + t.effect);
+  L.push('6. 【最重要】上のテイスト指定を絶対に守ること。指定と異なるスタイルにしないこと。');
   L.push('');
   L.push('# サウンド要件（Web Audio APIのみで完結、外部アセット不要）');
   L.push('1. ループBGM（必須実装）：' + t.bgm);
@@ -938,6 +963,7 @@ function buildIllustPrompt(sel, seed){
   L.push('1. スタイル：' + t.style);
   L.push('2. 配色：' + t.palette);
   L.push('3. 質感：' + t.texture);
+  L.push('4. 【最重要】上のスタイル指定を最優先で守ること。配色・質感・構図・描き味はすべてこのテイストで統一し、指定と異なるスタイル（例：実写指定なのに劇画調、劇画指定なのにポップ調）にしないこと。');
   L.push('');
   L.push('# 構図要件');
   L.push('- 縦長1コマ（比率' + (cfg.illust_ratio||'4:5') + '・目安' + (cfg.illust_size||'1080x1350') + 'px）。パネル印刷（' + (cfg.panel_print||'A4縦') + '想定）に耐える解像度。');
@@ -1002,6 +1028,7 @@ return { detectHappening, roll, buildGamePrompt, buildIllustPrompt, summary, com
 const $ = id => document.getElementById(id);
 let seed = Math.floor(Math.random()*2147483647);
 let packTouched = false;
+let lastSel = null, lastGameRoll = null;
 
 function val(name){ const el = document.querySelector('input[name="'+name+'"]:checked'); return el ? el.value : ''; }
 function setRadio(name, v){ const el = document.querySelector('input[name="'+name+'"][value="'+v+'"]'); if(el) el.checked = true; }
@@ -1059,13 +1086,15 @@ function generate(rollNew){
   const i = inputs();
   if(!i.t.trim() || !i.s.trim()){ toast('タイトルとエピソードは必須です'); return; }
   /* UIフォーム(t/s/a/p/g) → 生成関数(title/story/author/pack/genre) のキーを正しく対応させる */
-  const sel = { title: i.t, story: i.s, author: i.a, pack: i.p, genre: i.g, gtheme: i.gt, it: i.it };
+  const sel = { title: i.t, story: i.s, author: i.a, pack: i.p, genre: i.g, gt: i.gt, it: i.it };
   if(rollNew) seed = Math.floor(Math.random()*2147483647);
   const gp = window.HP_GEN.buildGamePrompt(sel, seed);
   const ip = window.HP_GEN.buildIllustPrompt(sel, seed);
   $('outGame').value = gp.text;
   $('outIllust').value = ip.text;
   $('sumChips').innerHTML = chipsHTML(window.HP_GEN.summary(sel, gp.roll));
+  lastSel = sel; lastGameRoll = gp.roll;
+  syncIllustTasteRow(sel.it);
   $('formCard').hidden = true;
   $('outCard').hidden = false;
   const payload = b64u(JSON.stringify(Object.assign({}, i, { seed: seed })));
@@ -1099,6 +1128,22 @@ function restore(){
     if(raw){ applyState(JSON.parse(raw)); }
   }catch(e){}
   return false;
+}
+
+/* 結果画面からのイラストテイスト切り替え（生成プロンプト段階でテイスト変更・バリエーション試行） */
+function syncIllustTasteRow(t){
+  document.querySelectorAll('#illustTasteRow .taste-swap').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
+}
+function setIllustTaste(t){
+  if(!lastSel){ toast('まず生成してください'); return; }
+  setRadio('itaste', t);
+  lastSel.it = t;
+  const ip = window.HP_GEN.buildIllustPrompt(lastSel, seed);
+  $('outIllust').value = ip.text;
+  $('sumChips').innerHTML = chipsHTML(window.HP_GEN.summary(lastSel, lastGameRoll));
+  syncIllustTasteRow(t); save();
+  const nm = (window.HP.ILLUST.find(x=>x.id==='I_'+t) || {}).name || t;
+  toast('イラストテイストを「' + nm + '」に変えて生成し直しました');
 }
 
 /* ---------- 出力（コピー / ダウンロード / 印刷） ---------- */
@@ -1173,6 +1218,9 @@ function wire(){
     dl('プロンプトまとめ_' + safeName(i.t) + '.md', both);
   });
   $('sessionChip').addEventListener('click', ()=>copyText(location.href));
+  document.querySelectorAll('#illustTasteRow .taste-swap').forEach(b=>{
+    b.addEventListener('click', ()=>setIllustTaste(b.dataset.t));
+  });
 }
 
 function boot(){

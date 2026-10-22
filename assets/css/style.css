@@ -120,6 +120,14 @@ textarea{min-height:110px;resize:vertical;}
   font-family:var(--mono);font-size:12.5px;line-height:1.6;
   min-height:380px;white-space:pre-wrap;
 }
+.taste-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;}
+.taste-label{font-weight:800;font-size:13px;}
+.taste-swap{
+  border:3px solid var(--ink);border-radius:10px;background:#fff;font-weight:700;
+  font-size:13px;padding:7px 14px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);font-family:var(--round);
+}
+.taste-swap.on{background:var(--yellow);}
+.taste-swap:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink);}
 .btnrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
 .btnrow .main,.btnrow .sub{
   border:3px solid var(--ink);border-radius:10px;padding:10px 16px;font-weight:800;
