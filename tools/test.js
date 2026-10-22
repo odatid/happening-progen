@@ -26,6 +26,12 @@ for(const g of genres) for(const gt of gthemes) for(const it of itastes){
 // 2) 必須セクション
 const sel = { title:'牛乳を全部こぼされた朝', story:'洗濯から戻ったら、リビングで牛乳パックを握りつぶしていた。', author:'3歳児パパ', pack:'HP01', genre:'action', gtheme:'pop', it:'pop' };
 const gp = gen.buildGamePrompt(sel, 1);
+const ip2 = gen.buildIllustPrompt(sel, 1);
+assert(gp.text.indexOf('今回の種になるハプニングエピソードはこちら。') === 0, 'game prompt must open with episode-first declaration');
+assert(ip2.text.indexOf('今回の種になるハプニングエピソードはこちら。') === 0, 'illust prompt must open with episode-first declaration');
+assert(gp.text.indexOf('こちらを表現するユニークなゲームを生成する。') >= 0, 'unique-game declaration missing (game)');
+assert(ip2.text.indexOf('こちらを表現する1コマイラストを生成する。') >= 0, 'unique-illust declaration missing (illust)');
+['牛乳を全部こぼされた朝','3歳児パパ'].forEach(k=>{ assert(gp.text.indexOf(k) >= 0 && ip2.text.indexOf(k) >= 0, 'episode block missing at top: ' + k); });
 ['# 目的','# 投稿ハプニング（テーマ）','# ゲームジャンルとゲームデザイン','# ビジュアル＆UI要件','# サウンド要件','# 出力形式'].forEach(s=>{
   assert(gp.text.indexOf(s) >= 0, 'game section missing: ' + s);
 });

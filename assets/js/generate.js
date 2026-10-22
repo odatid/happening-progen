@@ -257,6 +257,13 @@ function buildGamePrompt(sel, seed){
   const sceneText = buildSceneText(r.hp, a);
   const min = cfg.game_min_sec || '30', max = cfg.game_max_sec || '90';
   const L = [];
+  L.push('今回の種になるハプニングエピソードはこちら。');
+  L.push('【エピソード】' + (sel.title || '（無題）'));
+  L.push('【本文】' + sel.story);
+  L.push('【投稿者】' + (sel.author || '区民投稿'));
+  L.push('');
+  L.push('こちらを表現するユニークなゲームを生成する。エピソードの舞台・登場人物・小物・展開をそのままゲームに落とし込み、このエピソードでしか作れない1本にすること。');
+  L.push('');
   L.push('# 目的');
   L.push('「' + (cfg.event_name||'笑える子育てハプニングミュージアム') + '」（' + (cfg.venue||'') + '・12月イベント）に展示・実装可能な、' + min + '秒〜' + max + '秒で遊べる直感的でユーモラスなWebミニゲームを、単一のHTMLファイルとして作成してください。');
   L.push('ゲームは区民から投稿された子育てハプニングを題材に、コミカルに表現します。子育てを笑いに変える「あるある」の共感がテーマです。');
@@ -322,6 +329,13 @@ function buildIllustPrompt(sel, seed){
   const sceneText = buildSceneText(r.hp, a);
   const t = illustById(sel.it) || (window.HP.ILLUST||[])[0];
   const L = [];
+  L.push('今回の種になるハプニングエピソードはこちら。');
+  L.push('【エピソード】' + (sel.title || '（無題）'));
+  L.push('【本文】' + sel.story);
+  L.push('【投稿者】' + (sel.author || '区民投稿'));
+  L.push('');
+  L.push('こちらを表現する1コマイラストを生成する。エピソードの舞台・登場人物・小物・一番笑える瞬間をそのまま1コマに落とし込み、このエピソードでしか描けない1枚にすること。');
+  L.push('');
   L.push('# 目的');
   L.push('「' + (cfg.event_name||'笑える子育てハプニングミュージアム') + '」（' + (cfg.venue||'') + '）の展示パネル用 1コマイラストを作成してください。テーマは次の子育てハプニングです。');
   L.push('');
