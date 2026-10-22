@@ -57,6 +57,7 @@ happening-progen/
 - 編集後は必ず: `node tools/build_data.js`（同梱 data.js を更新）→ `python3 tools/build_xlsx.py`（xlsx更新）→ `node build.js`（offline.html更新）。
 - スプレッドシート運用: `happening_db.xlsx` を Google スプレッドシートにインポート → `tools/sheet_export.gs` でCSV書き出し → `csv/` に反映。
 - 行を足すだけで抽選候補が増える（バリエーション/ツイスト/ハプニング種別）。
+- ハプニング種別（HP01〜HP19）のサンプルエピソードは、公開記事の実例（[ていねい通販](https://www.teinei.co.jp/column/typical-story-of-child-raising/)／[CHEER!days](https://cheerdays.fcoop.or.jp/childcare/d03yQ)／[HugKum](https://hugkum.sho.jp/144991)／[自己肯定感ラボ](https://ac-jikokoutei.com/labo/parenting/2033/)／[cozre](https://feature.cozre.jp/79617)）を元に、種別・キーワード・演出ヒントに整理したもの。
 
 ## GitHub Pages デプロイ
 

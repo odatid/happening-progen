@@ -68,6 +68,19 @@ const noneSel = { title:'あるある', story:'とにかく大変だった。', 
 const rn = gen.buildIllustPrompt(noneSel, 5);
 assert(rn.text.indexOf('フォールバック') >= 0, 'fallback note missing when no place in story');
 
+// 7) お迎えバス×ママチャリの例（種別判定と題材の一本化）
+const busSel = { title:'幼稚園のお迎えバス', story:'幼稚園のお迎えバスをママチャリで追いかけた。信号ごとに差が開き、曲がり角でようやく追いついた。', author:'', pack:gen.detectHappening('幼稚園のお迎えバスをママチャリで追いかける'), genre:'action', gtheme:'pop', it:'pop' };
+assert(busSel.pack === 'HP08', 'bus episode detected as ' + busSel.pack);
+const bg = gen.buildGamePrompt(busSel, 9);
+['ママチャリ','お迎え','バス','幼稚園','信号','曲がり角'].forEach(k=>{ assert(bg.text.indexOf(k) >= 0, 'bus prompt missing: ' + k); });
+['おもちゃ箱','玩具の海','玩具箱','米びつ'].forEach(k=>{ assert(bg.text.indexOf(k) < 0, 'bus prompt must not use DB example: ' + k); });
+assert(bg.text.indexOf('題材は上のエピソード') >= 0, 'episode-first statement missing');
+
+// 8) 新DB種別（ネット実例ベース）の判定
+[['静かだと思ったら米びつ','HP09'],['レジで大泣き','HP11'],['げっきょくさんと言い間違い','HP12'],['添い寝で寝返り','HP04'],['お風呂で泡だらけ','HP06']].forEach(pair=>{
+  assert(gen.detectHappening(pair[0]) === pair[1], 'detect "' + pair[0] + '" → ' + gen.detectHappening(pair[0]) + ' (want ' + pair[1] + ')');
+});
+
 // 6) サンプル列の確認
 window.HP.HAPPI.forEach(h=>{ assert(!!h.sample && !!h.sampleTitle, 'sample missing: ' + h.id); });
 

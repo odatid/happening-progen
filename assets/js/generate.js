@@ -103,6 +103,16 @@ const DIC_THINGS = [
   ['パスモ,スイカ,財布,カード,鍵', '財布・カード類'],
   ['おやつ,菓子,チョコ,スナック,ポテチ', 'おやつ']
 ];
+const DIC_VEHICLES = [
+  ['ママチャリ,自転車,チャリ', 'ママチャリ（自転車）'],
+  ['園バス,スクールバス,お迎えバス,バス停,バス', 'お迎えバス'],
+  ['三輪車,キックボード,スクーター', '三輪車・キックボード'],
+  ['ベビーカー,バギー', 'ベビーカー'],
+  ['車,マイカー,ドライブ,助手席,チャイルドシート', '車'],
+  ['電車,駅,ホーム,改札', '電車'],
+  ['タクシー', 'タクシー'],
+  ['救急車,パトカー,消防車', 'はしご・サイレン車']
+];
 const DIC_ACTIONS = [
   ['全裸,裸,はだか,服を脱,パンツ一丁', '裸とっかえひっかえ'],
   ['こぼし,こぼれ,ぶちまけ,ダバダバ,床に広が', 'こぼし・ぶちまけ'],
@@ -131,21 +141,27 @@ function scanDic(text, dic){
   return out;
 }
 function analyzeStory(text){
+  const t0 = String(text||'');
+  /* 乗り物語（ママチャリ等）を先に抽出し、人物・小物判定の誤爆を防ぐため該当語を除いた本文で判定する */
+  const vehicles = scanDic(t0, DIC_VEHICLES);
+  let t = t0;
+  DIC_VEHICLES.forEach(p=>{ p[0].split(',').forEach(k=>{ if(t0.indexOf(k)>=0) t = t.split(k).join(''); }); });
   const a = {
-    places:  scanDic(text, DIC_PLACES),
-    times:   scanDic(text, DIC_TIMES),
-    people:  scanDic(text, DIC_PEOPLE),
-    things:  scanDic(text, DIC_THINGS),
-    actions: scanDic(text, DIC_ACTIONS)
+    places:  scanDic(t, DIC_PLACES),
+    times:   scanDic(t, DIC_TIMES),
+    people:  scanDic(t, DIC_PEOPLE),
+    things:  scanDic(t, DIC_THINGS),
+    actions: scanDic(t, DIC_ACTIONS),
+    vehicles: vehicles
   };
-  a.none = !a.places.length && !a.times.length && !a.people.length && !a.things.length && !a.actions.length;
+  a.none = !a.places.length && !a.times.length && !a.people.length && !a.things.length && !a.actions.length && !a.vehicles.length;
   return a;
 }
 /* 本文から「事件の瞬間」になりそうな文を拾う */
 function storyHighlights(text, maxN){
   const t = String(text||'');
   const sentences = t.split(/(?<=[。！？!?.\n])/).map(s=>s.trim()).filter(Boolean);
-  const keys = ['こぼ','散らか','脱走','逃げ','追い','泣き','だだこね','裸','描い','食べ','寝','全裸','笑い','撮影','うんち','トイレ','風呂','握りつぶ','返し','とられ','投げ','置いて','戻ったら','気づ','隠れ','まみれ'];
+  const keys = ['こぼ','散らか','脱走','逃げ','追い','間に合','遅刻','バス','ママチャリ','泣き','だだこね','裸','描い','食べ','寝','全裸','笑い','撮影','うんち','トイレ','風呂','握りつぶ','返し','とられ','投げ','置いて','戻ったら','気づ','隠れ','まみれ'];
   const hits = sentences.filter(s=>keys.some(k=>s.indexOf(k)>=0));
   const rest = sentences.filter(s=>hits.indexOf(s)<0);
   return hits.concat(rest).slice(0, maxN||3);
@@ -154,6 +170,7 @@ function storyHighlights(text, maxN){
 function buildSceneText(hp, a){
   const L = [];
   if(a.places.length) L.push('主な舞台は「' + a.places.join('・') + '」');
+  if(a.vehicles.length) L.push('登場する乗り物は「' + a.vehicles.join('・') + '」');
   if(a.times.length) L.push('時間帯・季節は「' + a.times.join('・') + '」');
   if(!L.length) L.push('主な舞台は「' + (hp.scene || '家庭のリビング') + '」（DBの既定。本文に場所の記載がないためのフォールバック）');
   let s = L.join('。') + '。';
@@ -170,19 +187,44 @@ function buildCastText(hp, a){
 }
 function buildPropsText(hp, a){
   const props = [];
-  if(a.things.length) props.push('本文に登場する小物をそのまま出す：' + a.things.join('・'));
+  const all = a.vehicles.concat(a.things);
+  if(all.length) props.push('本文に登場する乗り物・小物をそのまま出す：' + all.join('・'));
   else props.push('本文に固有の小物の記載がないため、種別の既定を使う：' + (hp.good||[]).slice(0,4).join('・'));
   return props.join('。');
 }
+/* エピソード→ゲームメカニクスへの変換指示 */
+function buildMechText(hp, a){
+  const who = a.people.length ? a.people.join('・') : '親（投稿者）';
+  const where = a.places.length ? a.places.join('・') : (hp.scene || '家庭');
+  const rides = a.vehicles;
+  const acts = a.actions;
+  const things = a.things;
+  const parts = ['主役: ' + who, '舞台: ' + where];
+  if(rides.length) parts.push('乗り物: ' + rides.join('・'));
+  if(things.length) parts.push('小物: ' + things.join('・'));
+  parts.push('行動: ' + (acts.length ? acts.join('・') : hp.gameHook));
+  let s = '上のエピソードの『誰が・どこで・何を使い・何をしたか』を、そのままゲームの目的・操作・得点に変換する。' + parts.join('／') + '。';
+  if(acts.some(x=>x.indexOf('追いかけ')>=0) || /追いかけ|追跡/.test(hp.gameHook)){
+    s += '推奨形：追跡アクション（主役を左右操作で動かし、よけるものと追いつく対象をエピソードの登場物にする）。';
+  }
+  if(acts.some(x=>x.indexOf('こぼし')>=0)){
+    s += '推奨形：キャッチ・回収アクション（こぼれるものを受け止める操作にする）。';
+  }
+  return s;
+}
 
-/* 本文キーワード → ハプニング種別の自動判定 */
+/* 本文キーワード → ハプニング種別の自動判定（ヒット数スコアリング方式。
+   「お迎えバス」「バスルーム」など語が複数種別にまたがっても、最も多く一致した種別を選ぶ） */
 function detectHappening(text){
   const t = String(text||'');
+  let best = 'HP00', bestScore = 0;
   for(const h of (window.HP.HAPPI||[])){
     if(h.id==='HP00') continue;
-    if(h.kw.some(k=>t.indexOf(k)>=0)) return h.id;
+    let s = 0;
+    h.kw.forEach(k=>{ if(t.indexOf(k)>=0) s++; });
+    if(s > bestScore){ best = h.id; bestScore = s; }
   }
-  return 'HP00';
+  return best;
 }
 
 /* ---------- 抽選（ジャンル/バリエーション/ツイスト/オノマトペ） ---------- */
@@ -225,14 +267,15 @@ function buildGamePrompt(sel, seed){
   L.push(bl('エピソード', sel.story));
   L.push(bl('投稿者', sel.author || '区民投稿'));
   L.push(bl('ハプニング種別', r.hp.label + '（' + r.hp.id + '）'));
-  L.push(bl('ゲーム化のヒント', r.hp.gameHook));
   L.push(bl('フキダシ用オノマトペ候補', r.onoGame.join(' / ')));
   L.push('');
   L.push('# 物語の反映（最重要・必ず守ること）');
+  L.push('- このゲームの題材は上のエピソードそのもの。DBのサンプルエピソードやパターン名の例は題材に使わず、舞台・登場人物・小物・展開はすべてエピソードから決めること。');
   L.push(bl('舞台・背景', sceneText));
   L.push(bl('登場させる人物', buildCastText(r.hp, a)));
-  L.push(bl('ゲーム内に出す小物', buildPropsText(r.hp, a)));
-  if(a.things.length) L.push(bl('障害物候補（悪いもの）', r.hp.bad.join(' ') + ' ＋ エピソードにちなんだ小物（' + a.things.join('・') + '）から選ぶ'));
+  L.push(bl('ゲーム内に出す乗り物・小物', buildPropsText(r.hp, a)));
+  L.push(bl('ゲームへの変換指示', buildMechText(r.hp, a)));
+  if(a.things.length || a.vehicles.length) L.push(bl('障害物候補（悪いもの）', r.hp.bad.join(' ') + ' ＋ エピソードにちなんだ乗り物・小物（' + a.vehicles.concat(a.things).join('・') + '）から選ぶ'));
   else L.push(bl('障害物候補（悪いもの）', r.hp.bad.join(' ')));
   L.push(bl('見どころ（エピソード引用）', hl.join(' ／ ')));
   L.push('- 背景の描き込み・ステージの小物・演出は、上のエピソードの状況をそのまま反映すること。「あるある汎用」の無難な背景にしないこと。');
@@ -240,7 +283,7 @@ function buildGamePrompt(sel, seed){
   L.push('');
   L.push('# ゲームジャンルとゲームデザイン');
   L.push(bl('ジャンル', r.genre.name + ' — ' + r.genre.goal));
-  if(r.variant) L.push(bl('実装パターン', r.variant.name + ' — ' + r.variant.desc));
+  if(r.variant) L.push(bl('実装パターン（操作の型の参考・1つ）', r.variant.name + ' — ' + r.variant.desc));
   if(r.twists.length) L.push(bl('ツイスト（ひとひねり）', r.twists.map(t=>t.text).join(' ／ ')));
   L.push(bl('操作体系（PC）', r.genre.controlsPC));
   L.push(bl('操作体系（スマホ）', r.genre.controlsSP));
@@ -292,6 +335,7 @@ function buildIllustPrompt(sel, seed){
   L.push(bl('フキダシ用オノマトペ候補', r.onoIllust));
   L.push('');
   L.push('# 物語の反映（最重要・必ず守ること）');
+  L.push('- この1コマの題材は上のエピソードそのもの。DBのサンプルエピソードや構図例は題材に使わず、描く瞬間・人物・小物はすべてエピソードから決めること。');
   L.push(bl('舞台・背景', sceneText));
   L.push(bl('登場させる人物', buildCastText(r.hp, a)));
   L.push(bl('描き込む小物', buildPropsText(r.hp, a)));
@@ -327,6 +371,7 @@ function summary(sel, r){
   const a = analyzeStory(sel.story);
   const parts = [];
   if(a.places.length) parts.push(a.places.join('・'));
+  if(a.vehicles.length) parts.push('乗り物: ' + a.vehicles.join('・'));
   if(a.times.length) parts.push(a.times.join('・'));
   if(a.people.length) parts.push('人物: ' + a.people.join('・'));
   if(a.things.length) parts.push('小物: ' + a.things.join('・'));
