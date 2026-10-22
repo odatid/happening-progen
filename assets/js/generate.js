@@ -25,12 +25,10 @@ function pickN(rng, arr, n){
 /* 組み合わせ総数（UI表示用） */
 function nCk(n,k){ if(k<0||k>n) return 0; let r=1; for(let i=1;i<=k;i++){ r=r*(n-k+i)/i; } return Math.round(r); }
 function comboCount(){
-  const tw = (window.HP.TWISTS||[]).length, co = (window.HP.COMEDY||[]).length, gm = (window.HP.GIMMICKS||[]).length;
+  const co = (window.HP.COMEDY||[]).length, chn = (window.HP.CHARS||[]).length;
   const tplTotal = (window.HP.TPL||[]).length, arc = (window.HP.ARCADE||[]).length;
-  const twistCombos = nCk(tw,2)+nCk(tw,3);
   const comedyCombos = nCk(co,2)+nCk(co,3);
-  const gimmickCombos = nCk(gm,1)+nCk(gm,2);
-  return arc * tplTotal * twistCombos * comedyCombos * gimmickCombos;
+  return arc * tplTotal * chn * comedyCombos;
 }
 /* ハプニング種別に対応するゲームテンプレート（種別専用 → 汎用HP00 の順） */
 function templatesFor(hpId){
@@ -284,9 +282,9 @@ function roll(sel, seed){
     genre = genreById(sel.genre) || (window.HP.GENRES||[])[0];
   }
   const vs = variantsOf(genre.id);
-  const twists = pickN(rng, window.HP.TWISTS, 2 + (rng()<0.3 ? 1 : 0));
+  const twists = []; /* 対象はゲームに慣れていない一般客のため、ツイストは出さない */
   const comedy = pickN(rng, window.HP.COMEDY, 2 + (rng()<0.35 ? 1 : 0));
-  const gimmicks = pickN(rng, window.HP.GIMMICKS, 1 + (rng()<0.5 ? 1 : 0));
+  const gimmicks = []; /* 特別仕掛けも出さない */
   const tplPool = templatesFor(hp.id);
   const tpl = tplPool.length ? tplPool[Math.floor(rng()*tplPool.length)] : null;
   const arcade = (window.HP.ARCADE||[]).length ? (window.HP.ARCADE||[])[Math.floor(rng()*(window.HP.ARCADE||[]).length)] : null;
@@ -356,12 +354,7 @@ function buildGamePrompt(sel, seed){
     L.push(bl('テンプレート「' + r.tpl.name + '」', r.tpl.core));
     L.push('- このテンプレートの場面・目的を、上のアーケード基盤型の上に乗せること（例：基盤＝横スクロール、テンプレ＝壁がきミュージアムなら「右へ進みながら壁の落書きをなぞって消す」）。基盤型とテンプレートの融合がこのゲームの独自性になる。');
   }
-  if(r.variant) L.push(bl('実装パターン（操作の型の参考・1つ）', r.variant.name + ' — ' + r.variant.desc));
-  if(r.twists.length) L.push(bl('ツイスト（ひとひねり・複数可）', r.twists.map(t=>t.text).join(' ／ ')));
   L.push('');
-  L.push('# ゲーム内仕掛け（特別要素）');
-  r.gimmicks.forEach(g=>L.push('- ' + g.name + '：' + g.desc));
-  L.push('- 上の仕掛けはエピソードに合わせて調整してよいが、少なくとも1つは実装すること。');
   L.push('');
   L.push('# 笑い設計（最重要・コミカル表現の要件）');
   L.push('- 子どもの起こすハプニングは「悪意のない無邪気な事象」。ゲーム内で子どもを悪者・犯人扱いせず、罰する演出もしない。失敗は「大変なことになった!」というコミカルな事態として表現する。');
@@ -381,6 +374,7 @@ function buildGamePrompt(sel, seed){
   L.push(bl('失敗条件', r.genre.lose));
   L.push(bl('プレイ時間', r.genre.duration + '秒（' + min + '〜' + max + '秒。1プレイは必ずこの範囲で終わる短時間・高回転設計にすること）'));
   L.push(bl('テンポの要件', '単純操作・テンポ重視。待ち時間・休憩を挟まず、30秒〜1分でサクッとクリアできる設計にする。演出（ヒットストップ等）は体感テンポを落とさない範囲に抑える。'));
+  L.push(bl('対象プレイヤー', 'ゲームに慣れていない一般客（子育て世帯を中心とした区民）。ルールは画面を見ればわかる単純さにし、特別仕掛けや複雑なモードは入れない。'));
   L.push(bl('トーン＆マナー', '子育てを否定・バカにせず、当事者も笑える「共感のある笑い」。不快・危険な表現は避ける。'));
   L.push('');
   const t = tasteById(sel.gt) || (window.HP.TASTES||[])[0];
