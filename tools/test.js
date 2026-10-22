@@ -104,6 +104,11 @@ assert(gp.text.indexOf('悪意のない無邪気な事象') >= 0, 'innocence rul
 assert(gp.text.indexOf('罰する演出もしない') >= 0, 'no-punishment rule missing (game)');
 assert(ip.text.indexOf('悪意のない無邪気な事象') >= 0, 'innocence rule missing (illust)');
 assert(gp.text.indexOf('笑いの演出パターン') >= 0, 'comedy pattern list missing (game)');
+// 子ども無邪気顔の必須要件
+assert(gp.text.indexOf('【必須】子どもの無邪気な顔をゲーム画面に表示') >= 0, 'child innocent face requirement missing (game)');
+assert(gp.text.indexOf('きょとん') >= 0 && gp.text.indexOf('ドヤ顔') >= 0, 'expression mapping missing (game)');
+assert(ip.text.indexOf('【必須】子どもの無邪気な顔を1コマの中心') >= 0, 'child innocent face requirement missing (illust)');
+assert(gp.text.indexOf('親だけが必死') >= 0, 'contrast rule missing (game)');
 const rg2 = gen.buildGamePrompt(reflectSel, 3);
 const cg = gen.buildIllustPrompt(reflectSel, 3);
 assert(rg2.text.indexOf('笑い設計') >= 0 && cg.text.indexOf('無邪気') >= 0, 'comedy sections missing for other input');
