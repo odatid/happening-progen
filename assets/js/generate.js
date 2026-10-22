@@ -243,6 +243,31 @@ function detectHappening(text){
   return best;
 }
 
+/* エピソードに合う操作キャラクターを選ぶ（本文の人物語に基づく優先 + 抽選） */
+function pickChar(hp, a, story, rng){
+  const all = window.HP.CHARS || [];
+  if(!all.length) return null;
+  const st = String(story||'');
+  const score = c => {
+    let s = 1;
+    const map = {
+      CC01:/ママ|母|かあさん|母親/, CC02:/パパ|父|父親|だんな|旦那|夫/,
+      CC03:/坊や|息子|男の子|息子さん/, CC04:/女の子|娘|むすめ/,
+      CC05:/赤ちゃん|あかちゃん|乳児|0歳|1歳/, CC06:/ママチャリ|自転車|チャリ/,
+      CC07:/ベビーカー|バギー/, CC08:/犬|猫|ネコ|ワンコ|ペット/
+    };
+    const re = map[c.id];
+    if(re && re.test(st)) s += 10;
+    /* 乗り物・ペア系（CC06/CC07）は「主役+乗り物」のペア絵として常に有力 +1 */
+    if(c.id==='CC06'||c.id==='CC07') s += 1;
+    return s;
+  };
+  /* 語で強く結びつく候補がいればそれを優先（確定的）、いなければ抽選 */
+  const ranked = all.map(c=>({c, s:score(c)})).sort((x,y)=>y.s-x.s);
+  if(ranked[0].s >= 11) return ranked[0].c;
+  return all[Math.floor(rng()*all.length)];
+}
+
 /* ---------- 抽選（ジャンル/バリエーション/ツイスト/オノマトペ） ---------- */
 function roll(sel, seed){
   const rng = mulberry32(seed);
@@ -263,9 +288,10 @@ function roll(sel, seed){
   const tplPool = templatesFor(hp.id);
   const tpl = tplPool.length ? tplPool[Math.floor(rng()*tplPool.length)] : null;
   const arcade = (window.HP.ARCADE||[]).length ? (window.HP.ARCADE||[])[Math.floor(rng()*(window.HP.ARCADE||[]).length)] : null;
+  const ch = pickChar(hp, null, sel.story, rng);
   const variant = null; /* アーケード型基盤が常に主軸なので汎用バリアントは使わない */
   const onoGame = pickN(rng, hp.ono, Math.min(3, (hp.ono||[]).length));
-  return { hp, genre, variant, tpl, arcade, twists, comedy, gimmicks, onoGame, onoIllust: onoGame[0]||'', cfg };
+  return { hp, genre, variant, tpl, arcade, ch, twists, comedy, gimmicks, onoGame, onoIllust: onoGame[0]||'', cfg };
 }
 
 function bl(label, text){ return '- ' + label + '：' + text; }
@@ -315,6 +341,13 @@ function buildGamePrompt(sel, seed){
   L.push('ゲームの土台は、下記の懐かしのアーケード型にすること（子どもから大人まで直感的に遊べる形式）。');
   L.push(bl('基盤型「' + r.arcade.name + '」', r.arcade.desc));
   L.push('- 基盤型の操作・進行・得点ルールを必ず使うこと。そのうえで、舞台・登場物・ゴール・障害物はすべてエピソードの内容に置き換えること（基盤は「型」であって、内容はエピソード100%）。');
+  L.push('');
+  L.push('# 操作キャラクター（最重要・かわいいキャラで作る）');
+  L.push(bl('操作キャラ「' + r.ch.name + '」', r.ch.profile));
+  L.push(bl('キャラの見た目', r.ch.visual));
+  L.push('- 【必須】プレイヤーが操作する対象は、上のかわいいキャラクター（人物・ペア・乗り物・ペット）にすること。記号（●▲■）、無名のアイコン、棒人間、無機質な図形を操作キャラにしない。');
+  L.push('- キャラは4頭身程度のちびデフォルメで、待機・移動・成功・失敗・ピンチの5状態アニメーションを持つ。失敗時もコミカルに（転がる・ふらふら・目が回る）で、無邪気さとかわいさを保つ。');
+  L.push('- エピソードに登場する他の人物（子ども・パートナー・ペット）も、同じデフォルメのかわいいキャラとして画面に登場させる。操作キャラは子どもを操作しない（子どもは無邪気な表情で画面にいる側）。');
   if(r.tpl){
     L.push('');
     L.push('# ゲームコア設計（このハプニング専用テンプレート・題材の適用）');
@@ -446,6 +479,7 @@ function summary(sel, r){
     gimmicks: r.gimmicks.map(x=>x.name),
     tpl: r.tpl ? (r.tpl.name + ' — ' + r.tpl.core) : '',
     arcade: r.arcade.name,
+    ch: r.ch ? r.ch.name : '',
     combos: comboCount(),
     gtheme: t ? t.name : '',
     itaste: it ? it.name : '',
