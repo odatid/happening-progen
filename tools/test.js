@@ -180,13 +180,7 @@ const rg2 = gen.buildGamePrompt(reflectSel, 3);
 const cg = gen.buildIllustPrompt(reflectSel, 3);
 assert(rg2.text.indexOf('笑い設計') >= 0 && cg.text.indexOf('無邪気') >= 0, 'comedy sections missing for other input');
 
-// 13) プレイ時間の短縮（30〜60秒）
-const cfgAll = window.HP.CFG || {};
-assert(String(cfgAll.game_max_sec) === '60', 'game_max_sec should be 60, got ' + cfgAll.game_max_sec);
-assert(gp.text.indexOf('45秒（30〜60秒') >= 0 || gp.text.indexOf('60秒（30〜60秒') >= 0, 'short play time not reflected: ' + (gp.text.match(/プレイ時間：[^\n]*/)||[''])[0]);
-assert(gp.text.indexOf('30秒〜1分でサクッとクリア') >= 0, 'tempo requirement missing');
-window.HP.GENRES.forEach(g=>{ assert(g.duration <= 60, 'genre duration too long: ' + g.id + ' ' + g.duration); });
-assert(gp.text.indexOf('90秒') < 0, 'old 90s duration still in prompt');
+// 13) プレイ時間の短縮（30〜60秒→現行は16で検証）
 
 // 14) テイスト指定が正しく反映される（ID不一致バグの回帰テスト）
 const baseSel = { title:'テスト', story:'テスト用のエピソードです。', author:'', pack:'HP01', genre:'action', gt: 'pop', it:'pop' };
@@ -203,6 +197,20 @@ assert(ilP.text.indexOf('アメコミPOP調') >= 0, 'illust taste pop not applie
 assert(ilPh.text.indexOf('実写風') >= 0, 'illust taste photo not applied');
 assert(ilG.text !== ilP.text && ilP.text !== ilPh.text && ilG.text !== ilPh.text, 'illust tastes produce identical prompts');
 assert(ilP.text.indexOf('指定と異なるスタイル') >= 0, 'taste adherence rule missing (illust)');
+
+// 16) 時間短縮(40/50秒)・難易度調整・SNSシェア
+assert(String(window.HP.CFG.game_max_sec) === '50', 'game_max_sec should be 50');
+assert(gp.text.indexOf('40秒、長くても50秒で必ず完結') >= 0, '40-50s play time rule missing');
+assert(gp.text.indexOf('90秒') < 0 && gp.text.indexOf('60秒で必ず') < 0, 'old duration leaked');
+assert(gp.text.indexOf('# 難易度調整') >= 0, 'difficulty section missing');
+assert(gp.text.indexOf('高速スクロールで文字や記号が読めなくなる設計は禁止') >= 0, 'no-fast-scroll rule missing');
+assert(gp.text.indexOf('普段ゲームをしない人向けのやさしい難易度') >= 0, 'easy-for-non-gamers rule missing');
+assert(gp.text.indexOf('当たり判定は大きめ') >= 0, 'generous hitbox rule missing');
+assert(gp.text.indexOf('# 結果シェア') >= 0, 'share section missing');
+assert(gp.text.indexOf('#江戸川区メタバース') >= 0, 'hashtag missing');
+assert(/ゲームタイトル[\s＋\+]*スコア/.test(gp.text), 'share format missing');
+assert(gp.text.indexOf('コピー') >= 0, 'clipboard-copy share method missing');
+window.HP.GENRES.forEach(g=>{ assert(g.duration <= 50, 'genre duration too long: ' + g.id + ' ' + g.duration); });
 
 // 6) サンプル列の確認
 window.HP.HAPPI.forEach(h=>{ assert(!!h.sample && !!h.sampleTitle, 'sample missing: ' + h.id); });
