@@ -212,6 +212,27 @@ assert(/ゲームタイトル[\s＋\+]*スコア/.test(gp.text), 'share format m
 assert(gp.text.indexOf('コピー') >= 0, 'clipboard-copy share method missing');
 window.HP.GENRES.forEach(g=>{ assert(g.duration <= 50, 'genre duration too long: ' + g.id + ' ' + g.duration); });
 
+// 17) 元ネタ素材庫（50エピソード）
+const eps = window.HP.EPISODES || [];
+assert(eps.length === 50, 'episode library should have 50 entries, got ' + eps.length);
+eps.forEach(e=>{
+  assert(e.title && e.story && e.hp_id, 'episode incomplete: ' + e.id);
+  assert(window.HP.HAPPI.some(h=>h.id===e.hp_id), 'episode ' + e.id + ' has unknown hp_id: ' + e.hp_id);
+  const p = gen.buildGamePrompt({ title:e.title, story:e.story, author:'区民投稿', pack:e.hp_id, genre:'omakase', gt:'pop', it:'pop' }, 7);
+  assert(p.text.indexOf('undefined') < 0, 'undefined in prompt for ' + e.id);
+  assert(p.text.indexOf(e.title) >= 0, 'title not in prompt for ' + e.id);
+});
+// 分類の抜き打ち確認
+const byId = id => eps.find(e=>e.id===id);
+assert(byId('N01').hp_id === 'HP02', 'N01 should be toilet');
+assert(byId('N22').hp_id === 'HP05', 'N22 should be crayon');
+assert(byId('N46').hp_id === 'HP12', 'N46 should be meigen');
+assert(byId('N28').hp_id === 'HP06', 'N28 should be bath');
+// 素材のタイトルがプロンプト冒頭に乗る
+const ep = byId('N03');
+const epp = gen.buildGamePrompt({ title:ep.title, story:ep.story, author:'', pack:ep.hp_id, genre:'omakase', gt:'pop', it:'pop' }, 9);
+assert(epp.text.split('\n').slice(0,4).join('\n').indexOf('おむつ替えは0.5秒が命だ！') >= 0, 'episode title not at prompt top');
+
 // 6) サンプル列の確認
 window.HP.HAPPI.forEach(h=>{ assert(!!h.sample && !!h.sampleTitle, 'sample missing: ' + h.id); });
 

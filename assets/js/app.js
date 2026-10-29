@@ -160,13 +160,23 @@ function wire(){
   $('btnSample').addEventListener('click', ()=>{
     const hs = (window.HP && window.HP.HAPPI) || [];
     if(!hs.length){ toast('DB読み込み中です'); return; }
-    const h = hs[Math.floor(Math.random()*hs.length)];
-    $('fTitle').value = h.sampleTitle || ('サンプル：' + h.label);
-    $('fStory').value = h.sample || '';
-    $('fPack').value = h.id; packTouched = true;
+    /* サンプルは「元ネタ素材庫（50本）」を主に、種別DBのサンプルも混ぜて引く */
+    const eps = (window.HP.EPISODES) || [];
+    const useEp = eps.length && Math.random() < 0.85;
+    if(useEp){
+      const e = eps[Math.floor(Math.random()*eps.length)];
+      $('fTitle').value = e.title;
+      $('fStory').value = e.story;
+      $('fPack').value = e.hp_id || 'HP00'; packTouched = true;
+      toast('元ネタ素材庫から「' + e.title + '」を入れました。そのまま「生成する」でOK');
+    }else{
+      const h = hs[Math.floor(Math.random()*hs.length)];
+      $('fTitle').value = h.sampleTitle || ('サンプル：' + h.label);
+      $('fStory').value = h.sample || '';
+      $('fPack').value = h.id; packTouched = true;
+      toast('サンプルを入れました。内容を確認して「生成する」をおしてください');
+    }
     counters(); save();
-    /* サンプルをフォームに入れるだけ。生成はユーザーが確認してから「生成する」で行う */
-    toast('サンプルを入れました。内容を確認して「生成する」をおしてください');
     window.scrollTo({top:0, behavior:'smooth'});
   });
   $('btnRestart').addEventListener('click', ()=>{
