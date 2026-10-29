@@ -278,6 +278,39 @@ function pickChar(hp, a, story, rng){
   return all[Math.floor(rng()*all.length)];
 }
 
+/* キャラクターシート（色指定・服装・顔パーツ・アニメ状態まで具体指定） */
+function charSheet(c){
+  const L = [];
+  L.push('キャラクターシート（下の指定をそのまま実装する）：');
+  L.push('- 頭身：3.5〜4頭身のちびデフォルメ。丸みのあるシルエット。');
+  L.push('- 体色：' + c.colors);
+  L.push('- 服装・持ち物：' + c.outfit);
+  L.push('- 顔のパーツ：' + c.face);
+  L.push('- アニメーション：' + c.anim);
+  L.push('- 禁止：プリミティブな図形（丸・四角・棒人間）や無名アイコンでの代用。目・髪型・服・ほっぺの赤み・持ち物まで描き込んだ具体キャラにすること。');
+  return L;
+}
+/* 江戸川区ならではの舞台づくり（ゲーム・イラスト共通の組み立て） */
+function buildLocalGame(items){
+  const L = [];
+  L.push('ゲームの随所（背景・看板・標識・小物・演出）に、江戸川区ならではの風景・景観・文字を入れること。区民が「江戸川区のイベントだ」と一目でわかる舞台づくりが必須。');
+  L.push('採用する江戸川区の要素：');
+  items.forEach(it=>L.push('  - ' + it.name + '：' + it.prompt_text));
+  L.push('- 上の要素はエピソードの舞台と違和感なく融合させること。家庭内が舞台なら「窓の外に江戸川・戸建て住宅街・電柱と電線」、外出系なら「区の看板・駅名・商店街・河川敷」にする。');
+  L.push('- 主張しすぎない程度に、画面の随所（背景・看板・道しるべ・小物）に散りばめること。看板・標識の文字には「えどがわ」表記や地区名（葛西/小岩/船堀/瑞江/篠崎/一之江）を使う。');
+  L.push('- 区の公式キャラクター（エドリバー）を登場させる場合は、区の許可が取れている場合のみにし、デザインを変更しないこと。許可が未定なら登場させない。');
+  return L;
+}
+function buildLocalIllust(items){
+  const L = [];
+  L.push('背景に江戸川区ならではの風景・景観を描き込み、区民が「江戸川区のパネルだ」とわかるようにする。');
+  L.push('採用する江戸川区の要素：');
+  items.forEach(it=>L.push('  - ' + it.name + '：' + it.prompt_text));
+  L.push('- 看板や標識に「えどがわ」表記・地区名を小さく入れる（文字は最小限、主役は親子）。');
+  L.push('- 区の公式キャラクター（エドリバー）を使う場合は区の許可制。許可が未定なら描かない。');
+  return L;
+}
+
 /* ---------- 抽選（ジャンル/バリエーション/ツイスト/オノマトペ） ---------- */
 function roll(sel, seed){
   const rng = mulberry32(seed);
@@ -301,7 +334,9 @@ function roll(sel, seed){
   const ch = pickChar(hp, null, sel.story, rng);
   const variant = null; /* アーケード型基盤が常に主軸なので汎用バリアントは使わない */
   const onoGame = pickN(rng, hp.ono, Math.min(3, (hp.ono||[]).length));
-  return { hp, genre, variant, tpl, arcade, ch, twists, comedy, gimmicks, onoGame, onoIllust: onoGame[0]||'', cfg };
+  const localGame = pickN(rng, window.HP.LOCAL, 3 + (rng()<0.4 ? 1 : 0));
+  const localIllust = pickN(rng, window.HP.LOCAL, 2);
+  return { hp, genre, variant, tpl, arcade, ch, twists, comedy, gimmicks, localGame, localIllust, onoGame, onoIllust: onoGame[0]||'', cfg };
 }
 
 function bl(label, text){ return '- ' + label + '：' + text; }
@@ -354,10 +389,12 @@ function buildGamePrompt(sel, seed){
   L.push('');
   L.push('# 操作キャラクター（最重要・かわいいキャラで作る）');
   L.push(bl('操作キャラ「' + r.ch.name + '」', r.ch.profile));
-  L.push(bl('キャラの見た目', r.ch.visual));
-  L.push('- 【必須】プレイヤーが操作する対象は、上のかわいいキャラクター（人物・ペア・乗り物・ペット）にすること。記号（●▲■）、無名のアイコン、棒人間、無機質な図形を操作キャラにしない。');
-  L.push('- キャラは4頭身程度のちびデフォルメで、待機・移動・成功・失敗・ピンチの5状態アニメーションを持つ。失敗時もコミカルに（転がる・ふらふら・目が回る）で、無邪気さとかわいさを保つ。');
-  L.push('- エピソードに登場する他の人物（子ども・パートナー・ペット）も、同じデフォルメのかわいいキャラとして画面に登場させる。操作キャラは子どもを操作しない（子どもは無邪気な表情で画面にいる側）。');
+  charSheet(r.ch).forEach(l=>L.push(l));
+  L.push('- 【必須】プレイヤーが操作する対象は、上のキャラクターにすること。記号（●▲■）、無名のアイコン、棒人間、無機質な図形を操作キャラにしない。');
+  L.push('- エピソードに登場する他の人物（子ども・パートナー・ペット）も、同じデフォルメ・同じ色指定ルールのかわいいキャラとして画面に登場させる。操作キャラは子どもを操作しない（子どもは無邪気な表情で画面にいる側）。');
+  L.push('');
+  L.push('# 江戸川区ならではの舞台づくり（最重要）');
+  buildLocalGame(r.localGame).forEach(l=>L.push(l));
   if(r.tpl){
     L.push('');
     L.push('# ゲームコア設計（このハプニング専用テンプレート・題材の適用）');
@@ -442,6 +479,12 @@ function buildIllustPrompt(sel, seed){
   L.push('- 1コマで描く瞬間は、上のエピソードの中で一番笑える場面（見どころ）にすること。エピソードと無関係な汎用構図にしないこと。');
   L.push('- 背景はこのエピソードの舞台（' + (a.places.length ? a.places.join('・') : 'エピソード本文から読み取る') + '）を読み取れるように描き込むこと。');
   L.push('');
+  L.push('# 江戸川区ならではの背景（最重要）');
+  buildLocalIllust(r.localIllust).forEach(l=>L.push(l));
+  L.push('');
+  L.push('# キャラクターシート（イラストにも適用）');
+  L.push('- 人物は操作キャラクター「' + r.ch.name + '」のキャラクターシートに合わせて描く（' + r.ch.colors + '）。');
+  L.push('');
   L.push('# イラストテイスト（' + t.name + '）');
   L.push('1. スタイル：' + t.style);
   L.push('2. 配色：' + t.palette);
@@ -489,6 +532,7 @@ function summary(sel, r){
     tpl: r.tpl ? (r.tpl.name + ' — ' + r.tpl.core) : '',
     arcade: r.arcade.name,
     ch: r.ch ? r.ch.name : '',
+    local: (r.localGame||[]).map(x=>x.name),
     combos: comboCount(),
     gtheme: t ? t.name : '',
     itaste: it ? it.name : '',

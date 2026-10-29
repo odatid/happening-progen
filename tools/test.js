@@ -132,7 +132,7 @@ assert(cg3.roll.arcade, 'no arcade for crayon');
 
 // 12) 操作キャラクター（かわいいキャラ必須）
 assert(gp.text.indexOf('# 操作キャラクター（最重要・かわいいキャラで作る）') >= 0, 'char section missing');
-assert(gp.text.indexOf('【必須】プレイヤーが操作する対象は、上のかわいいキャラクター') >= 0, 'cute-char requirement missing');
+assert(gp.text.indexOf('【必須】プレイヤーが操作する対象は、上のキャラクターにすること') >= 0, 'cute-char requirement missing');
 assert(gp.text.indexOf('記号（●▲■）') >= 0, 'no-symbol rule missing');
 assert(gp.roll.ch && gp.roll.ch.name, 'no char picked');
 const mamaSel = { title:'朝の大バタバタ', story:'ママが朝の支度で走り回っていたら、子どもが牛乳をこぼした。', author:'', pack:'HP01', genre:'omakase', gt: 'pop', it:'pop' };
