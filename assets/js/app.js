@@ -218,8 +218,8 @@ function boot(){
   function start(){
     fillPacks();
     const c = window.HP.CFG || {};
-    if(c.event_name && c.organizer){
-      $('footCredit').textContent = c.event_name + '（仮）｜' + c.organizer;
+    if(c.organizer){
+      $('footCredit').textContent = c.event_name ? c.event_name + '（仮）｜' + c.organizer : c.organizer;
     }
     wire(); counters(); restore();
   }
